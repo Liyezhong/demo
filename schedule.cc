@@ -48,7 +48,6 @@ struct step {
         temperature = j["temperature"].get<int>();
         is_pressure = (j["pressure"].get<std::string>() == "on") ? true : false;
         is_vacuum = (j["vacuum"].get<std::string>() == "on") ? true : false;
-
     }
 
     std::string dump()
@@ -70,21 +69,22 @@ struct step {
 
 class Program {
 public:
-    Program(std::string _name, json &_j)
+    Program(std::string _name, json &_j) 
+        : start_time(0), end_time(0), index(0), name(_name)
     {
-        name = _name;
-        index = 0;
-        for (int i = 0; i < _j.size(); ++i)
+        for (size_t i = 0; i < _j.size(); ++i)
             steps.insert(make_pair(i, new step(_j[i])));
     }
 
     void dump()
     {
-        for (int i = 0; i < steps.size(); ++i)
+        for (size_t i = 0; i < steps.size(); ++i)
             std::cout << "\n\n----------------------\nstep : " << steps[i]->dump();
     }
 
 private:
+    int start_time;
+    int end_time;
     int index;
     std::string name;
     std::map<int, step *> steps;
@@ -110,11 +110,9 @@ public:
 
 int main()
 {
-    auto config = configuration();
-    //std::cout << "configuration reagents: " << config.reagents->dump().c_str() << std::endl;
-    //
-
-    json &overnight = (*config.programs)["overnight"];
+	auto config = configuration();
+	
+    json &overnight = config.programs->operator[]("overnight");
     Program p("overnight", overnight);
     p.dump();
 

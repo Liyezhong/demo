@@ -1,2 +1,2 @@
 all:
-	g++ schedule.cc -o schedule -I. -std=c++1y
+	g++ -g -Wall schedule.cc -o schedule -I. -std=c++1y
