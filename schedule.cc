@@ -69,20 +69,55 @@ struct step {
 
 class Program {
 public:
-    Program(std::string _name, json &_j) 
+    Program(std::string _name, json &_j)
         : start_time(0), end_time(0), index(0), name(_name)
     {
         for (size_t i = 0; i < _j.size(); ++i)
             steps.insert(make_pair(i, new step(_j[i])));
     }
 
-    void dump()
+    void dump() const
     {
         for (size_t i = 0; i < steps.size(); ++i)
             std::cout << "\n\n----------------------\nstep : " << steps[i]->dump();
     }
 
+    int resolveConflicts(const Program& base)
+    {
+        int offset = 0;
+        base.steps[]
+
+    }
+
+    int sumOffset(const Program& program, int index)
+    {
+        int sum = 0;
+        for (int i = 0; i <= index; ++i)
+            sum += program.steps[i].duration;
+        return sum - runTime;
+    }
+
+    int find(const Program& program, std::string reagent)
+    {
+        int index = -1;
+        for (size_t i = 0; i < program.steps.size(); ++i) {
+            if (program.steps[i].reagent == reagent) {
+                sum = 0;
+                for (size_t j = 0; j <= i; ++j) {
+                    sum += program.steps[i].duration;
+                }
+                if (sum > runTime)
+                    index = i;
+
+                break;
+            }
+        }
+
+        return index;
+    }
+
 private:
+    int runTime;
     int start_time;
     int end_time;
     int index;
@@ -111,7 +146,7 @@ public:
 int main()
 {
 	auto config = configuration();
-	
+
     json &overnight = config.programs->operator[]("overnight");
     Program p("overnight", overnight);
     p.dump();
