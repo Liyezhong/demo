@@ -39,6 +39,15 @@ private:
     json _config;
 };
 
+class Reagent {
+    public:
+        Reagent(json &j)
+        {
+
+        }
+
+};
+
 struct step {
     step(json &j)
     {
@@ -69,8 +78,8 @@ struct step {
 
 class Program {
 public:
-    Program(std::string _name, json &_j)
-        : start_time(0), end_time(0), index(0), name(_name)
+    Program(std::string _name, json &_j, int start_time_)
+        : start_time(0), end_time(0), offset(0), index(0), name(_name)
     {
         for (size_t i = 0; i < _j.size(); ++i)
             steps.insert(make_pair(i, new step(_j[i])));
@@ -100,6 +109,8 @@ public:
     int find(const Program& program, std::string reagent)
     {
         int index = -1;
+        if (reagent == "r1")
+            return index;
         for (size_t i = 0; i < program.steps.size(); ++i) {
             if (program.steps[i].reagent == reagent) {
                 sum = 0;
@@ -108,7 +119,6 @@ public:
                 }
                 if (sum > runTime)
                     index = i;
-
                 break;
             }
         }
@@ -119,6 +129,7 @@ public:
 private:
     int runTime;
     int start_time;
+    int offset;
     int end_time;
     int index;
     std::string name;
