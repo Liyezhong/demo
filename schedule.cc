@@ -123,16 +123,16 @@ public:
             offsetBackup = offset;
             for (size_t i = 0; i < steps.size(); ++i) {
                 int j = base->find(steps[i]->reagent);
-    
+
                 if (j == -1)
                     continue;
-    
+
                 int baseLow, baseHigh;
                 int curLow, curHigh;
-    
+
                 base->sumSteps(j, baseLow, baseHigh);
                 this->sumSteps(i, curLow, curHigh);
-    
+
                 int len = baseHigh - curLow;
                 if ((len >= base->steps[j]->duration + steps[i]->duration) || len <= 0)
                     continue;
@@ -185,7 +185,7 @@ public:
 
 int compare(Program *p1, Program *p2)
 {
-    // The formalin phase needs special treatment. 
+    // The formalin phase needs special treatment.
     return (((p1->startTime + p1->steps[0]->duration) < (p2->startTime + p2->steps[0]->duration))
             || (p1->priority > p2->priority));
 }
@@ -213,9 +213,12 @@ int main()
 
     // resolve conflicts
     for (ssize_t i = 1; i < (ssize_t)v.size(); ++i) {
-        for (ssize_t j = i - 1; j >=0; --j) {
-            v[i]->resolveConflicts(v[j]);
-        }
+        int offsetBackup;
+        do {
+            offsetBackup = v[i]->offset;
+            for (ssize_t j = i - 1; j >=0; --j)
+                v[i]->resolveConflicts(v[j]);
+        } while (offsetBackup != v[i]->offset);
     }
 
     for (size_t i = 0; i < v.size(); ++i) {
