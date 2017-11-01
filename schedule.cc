@@ -115,7 +115,8 @@ public:
     void resolveConflicts(Program *base)
     {
         // FIXME, There may be a bug here.
-        if (base->startTime + base->offset > startTime)
+        if ((base->startTime + base->offset) > startTime 
+                && abs(base->index - this->index) == 1)
             offset = base->startTime + base->offset - startTime;
 
         int offsetBackup;
@@ -153,22 +154,28 @@ public:
 
     int find(std::string reagent)
     {
-        int index = -1;
+        int ret = -1;
+        // r1 == formalin
         if (reagent == "r1")
-            return index;
+            return ret;
         for (size_t i = 0; i < steps.size(); ++i) {
             if (steps[i]->reagent == reagent) {
-                index = i;
+                ret = i;
                 break;
             }
         }
 
-        return index;
+        return ret;
     }
 
     std::string getName()
     {
         return name;
+    }
+
+    void setIndex(int i)
+    {
+        index = i;
     }
 
 public:
@@ -181,6 +188,7 @@ public:
     Configuration *config;
     int retort;
     int priority;
+    int index;
 };
 
 int compare(Program *p1, Program *p2)
@@ -210,6 +218,9 @@ int main()
 
     // sort by start_time and priority
     sort(v.begin(), v.end(), compare);
+    // update index
+    for (size_t i = 0; i < v.size(); ++i)
+        v[i]->setIndex(i);
 
     // resolve conflicts
     for (ssize_t i = 1; i < (ssize_t)v.size(); ++i) {

@@ -1,25 +1,25 @@
 {
     "reagents" : {
-        "r1" :  { "name" : "formalin", "number" : 4 },
-        "r2" :  { "name" : "ethanol 70%", "number" : 1 },
-        "r3" :  { "name" : "ethanol 80%", "number" : 1 },
-        "r4" :  { "name" : "ethanol 90%", "number" : 1 },
-        "r5" :  { "name" : "ethanol 95%", "number" : 1 },
-        "r6_1" :  { "name" : "ethanol 100%", "number" : 1 },
-        "r6_1_1" :  { "name" : "ethanol 100%", "number" : 1 },
-        "r6_2" :  { "name" : "ethanol 100%", "number" : 1 },
-        "r6_3" :  { "name" : "ethanol 100%", "number" : 1 },
-        "r7_1" :  { "name" : "xylene", "number" : 1 },
-        "r7_1_1" :  { "name" : "xylene", "number" : 1 },
-        "r7_2" :  { "name" : "xylene", "number" : 1 },
-        "r7_3" :  { "name" : "xylene", "number" : 1 },
-        "r8_1" :  { "name" : "paraffin", "number" : 1 },
-        "r8_1_1" :  { "name" : "paraffin", "number" : 1 },
-        "r8_2" :  { "name" : "paraffin", "number" : 1 },
-        "r8_3" :  { "name" : "paraffin", "number" : 1 },
-        "r9" :  { "name" : "processing water", "number" : 1 },
-        "r10" : { "name" : "cleaning xylene", "number" : 1 },
-        "r11" : { "name" : "cleaning alcohol", "number" : 1 }
+        "r1" :  { "name" : "formalin", "number" : 4, "passing_point" : true },
+        "r2" :  { "name" : "ethanol 70%", "number" : 1, "passing_point" : false },
+        "r3" :  { "name" : "ethanol 80%", "number" : 1, "passing_point" : false },
+        "r4" :  { "name" : "ethanol 90%", "number" : 1, "passing_point" : false },
+        "r5" :  { "name" : "ethanol 95%", "number" : 1, "passing_point" : false },
+        "r6_1" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : true },
+        "r6_1_1" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : true },
+        "r6_2" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : false },
+        "r6_3" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : false },
+        "r7_1" :  { "name" : "xylene", "number" : 1, "passing_point" : true },
+        "r7_1_1" :  { "name" : "xylene", "number" : 1, "passing_point" : true },
+        "r7_2" :  { "name" : "xylene", "number" : 1, "passing_point" : false },
+        "r7_3" :  { "name" : "xylene", "number" : 1, "passing_point" : false },
+        "r8_1" :  { "name" : "paraffin", "number" : 1, "passing_point" : true },
+        "r8_1_1" :  { "name" : "paraffin", "number" : 1, "passing_point" : true },
+        "r8_2" :  { "name" : "paraffin", "number" : 1, "passing_point" : false },
+        "r8_3" :  { "name" : "paraffin", "number" : 1, "passing_point" : false },
+        "r9" :  { "name" : "processing water", "number" : 1, "passing_point" : false },
+        "r10" : { "name" : "cleaning xylene", "number" : 1, "passing_point" : false },
+        "r11" : { "name" : "cleaning alcohol", "number" : 1, "passing_point" : false }
     },
 
     "devices" : {
@@ -119,8 +119,8 @@
 
     "run" : [
         { "program" : "@overnight", "retort" : "@r1", "priority" : 1, "start_time" : "2017-09-30 00:00:00", "end_time" : "" },
-        { "program" : "@biopsy", "retort" : "@r2", "priority" : 3, "start_time" : "2017-09-30 02:00:00", "end_time" : "" },
-        { "program" : "@overnight", "retort" : "@r3", "priority" : 1, "start_time" : "2017-09-30 00:00:01", "end_time" : "" },
+        { "program" : "@overnight", "retort" : "@r2", "priority" : 3, "start_time" : "2017-09-30 00:00:00", "end_time" : "" },
+        { "program" : "@overnight", "retort" : "@r3", "priority" : 1, "start_time" : "2017-09-30 00:00:00", "end_time" : "" },
         { "program" : "@overnight", "retort" : "@r4", "priority" : 1, "start_time" : "2017-09-30 00:00::00", "end_time" : "" }
     ]
 }
