@@ -121,6 +121,6 @@
         { "program" : "@overnight", "retort" : "@r1", "priority" : 1, "start_time" : "2017-09-30 00:00:00", "end_time" : "" },
         { "program" : "@overnight", "retort" : "@r2", "priority" : 3, "start_time" : "2017-09-30 00:00:00", "end_time" : "" },
         { "program" : "@overnight", "retort" : "@r3", "priority" : 1, "start_time" : "2017-09-30 00:00:00", "end_time" : "" },
-        { "program" : "@overnight", "retort" : "@r4", "priority" : 1, "start_time" : "2017-09-30 00:00::00", "end_time" : "" }
+        { "program" : "@biopsy", "retort" : "@r4", "priority" : 99, "start_time" : "2017-09-30 03:00::00", "end_time" : "" }
     ]
 }
