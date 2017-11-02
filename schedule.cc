@@ -1,3 +1,6 @@
+// author : Arthur Li
+// time   : 2017/9/30
+
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -179,9 +182,10 @@ public:
     void resolveConflicts(Program *base)
     {
         // FIXME, There may be a bug here.
-        if ((base->calculationBaseTime() + base->baseStep->offset) > calculationBaseTime() 
+        printf("hello\n");
+        if ((base->calculationBaseTime()) > calculationBaseTime() 
                 && abs(base->index - this->index) == 1)
-            this->baseStep->offset = base->calculationBaseTime() + base->baseStep->offset - calculationBaseTime();
+            this->baseStep->offset = base->calculationBaseTime() - calculationBaseTime();
 
         int offsetBackup;
         do {
@@ -206,9 +210,42 @@ public:
         } while (offsetBackup != this->baseStep->offset);
     }
 
-    void resolvePassingPoint(Program *base)
+    int searchPassingPointStartStep(Program *base)
     {
+        for (size_t i = 0; i < steps.size(); ++i) {
+            int baseLow, baseHigh;
+            base->sumSteps(i, baseLow, baseHigh);
+            if (startTime >= baseLow && startTime < baseHigh)
+                return i;
+        }
+        return -1;
+    }
 
+    void searchPassingPoint(Program *base)
+    {
+        int ret = searchPassingPointStartStep(base);
+        if (ret == -1)
+            return;
+        for (ssize_t i = ret; i < (ssize_t)base->steps.size(); ++i) {
+            if (base->steps[i]->isPassingPoint() == true) {
+                // here is passing point
+                base->baseStep = base->steps[i];
+                break;
+            }
+            int j = this->find(base->steps[i]);
+            if (j == -1)
+                continue;
+
+            int baseLow, baseHigh;
+            int curLow, curHigh;
+
+            base->sumSteps(i, baseLow, baseHigh);
+            this->sumSteps(j, curLow, curHigh);
+            int len = baseHigh - curLow;
+            if ((len >= base->steps[i]->duration + steps[j]->duration) || len <= 0)
+                continue;
+            this->baseStep->offset += len;   
+        }
     }
 
     void sumSteps(int step, int &low, int &high)
@@ -273,8 +310,6 @@ public:
 
         return sum;    
     }
-
-
     
 public:
     int endTime;
@@ -297,9 +332,15 @@ int compare(Program *p1, Program *p2)
              && (p1->priority > p2->priority)));
 }
 
+#define PASSING_POINT
+
 int main()
 {
     auto config = Configuration();
+
+#ifdef PASSING_POINT     
+    Program *programPassingPoint = nullptr;
+#endif
 
     // load program from configuration
     auto run = config.run;
@@ -312,6 +353,12 @@ int main()
         int priority = item["priority"].get<int>();
         json &j = config.programs->operator[](name);
         auto program = new Program(name, j, startTime, &config, retort, priority);
+#ifdef PASSING_POINT 
+        if (priority == 99) {
+            programPassingPoint = program;
+            continue;
+        }
+#endif
         v.push_back(program);
     }
 
@@ -321,7 +368,6 @@ int main()
     for (size_t i = 0; i < v.size(); ++i)
         v[i]->setIndex(i);
 
-    // int startTimeCompare = v[0].calculationBaseTime();
     // resolve conflicts, no passing point
     ssize_t len = (ssize_t)v.size();
  
@@ -350,8 +396,49 @@ int main()
         } while (offsetBackup != v[i]->baseStep->offset);
     }
 
+#ifdef PASSING_POINT
+// 1. Reverse overtaking point positioning
+//   1) update programPassingPoint offset
+//   2) search base program passing point
+    for (ssize_t i = v.size() - 1; i >= 0; --i) {
+        programPassingPoint->searchPassingPoint(v[i]);
+    }
+// 2. Add programPassingPoint to program container
+#if 0
+    programPassingPoint->setIndex(-1); 
+    v.push_back(programPassingPoint);
+
+    sort(v.begin(), v.end(), [](Program *p1, Program *p2) {
+        return (p1->index < p2->index);
+    });
+    // update index
     for (size_t i = 0; i < v.size(); ++i)
-        v[i]->printTimingSequence();
+        v[i]->setIndex(i);
+// 3. Rearrange program  
+    // for (ssize_t i = 1; i < (ssize_t)v.size(); ++i) {       
+        // int offsetBackup;
+        // do {
+        //     offsetBackup = v[i]->baseStep->offset;
+            // for (ssize_t j = i - 1; j >=0; --j)
+                // v[i]->resolveConflicts(v[i-1]);
+        // } while (offsetBackup != v[i]->baseStep->offset);
+    // } 
+    
+    v[1]->resolveConflicts(v[0]);
+#endif
+    programPassingPoint->setIndex(-1);
+    vector<Program *> vv;
+    vv.push_back(programPassingPoint);
+    for (size_t i = 0; i < v.size(); ++i)
+        vv.push_back(v[i]);
+    // vv[1]->resolveConflicts(vv[0]);
+    
+
+
+#endif
+
+    for (size_t i = 0; i < vv.size(); ++i)
+        vv[i]->printTimingSequence();
 
     pause();
 
