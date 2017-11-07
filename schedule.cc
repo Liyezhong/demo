@@ -175,9 +175,8 @@ public:
 
     int searchPassingPointStartStep(Program *base)
     {
-        for (int i = 0; i < base->steps.size(); ++i) {
+        for (int i = 0; i < (int)base->steps.size(); ++i) {
             int baseLow, baseHigh;
-            // FIXME, there is a bug here.
             base->sumSteps(base->steps[i], baseLow, baseHigh);
             if (this->startTime >= baseLow && this->startTime < baseHigh)
                 return i;
@@ -199,9 +198,8 @@ public:
             int j = this->find(base->steps[i]);
             if (j == -1)
                 continue;
-
             int len;
-            if (isIntersection(base->steps[j], this->steps[i], len) == true)
+            if (isIntersection(base->steps[i], this->steps[j], len) == true)
                 this->baseStep->offset += len;
         }
     }
@@ -263,32 +261,11 @@ public:
         return name;
     }
 
-    void setIndex(int i)
-    {
-        index = i;
-    }
-
     void setBaseStep(Step *s)
     {
         if (s->parent != this)
             return;
         baseStep = s;
-    }
-
-    // start time 到 basestep所用的时间, 包括basestep时间
-    int calculationBaseTime()
-    {
-        int sum = startTime;
-        std::map<int, Step *>::iterator it = steps.begin();
-
-        do {
-            sum += it->second->getTotalTime();
-            if (it->second == baseStep)
-                break;
-            it++;
-        } while (it != steps.end());
-
-        return sum;    
     }
 
     // start time 到 basestep所用的时间, 不包括basestep时间
@@ -315,7 +292,6 @@ public:
     Configuration *config;
     int retort;
     int priority;
-    int index;
 };
 
 int compare(Program *p1, Program *p2)
@@ -333,6 +309,7 @@ int compare(Program *p1, Program *p2)
 }
 
 #define PASSING_POINT
+#define DEBUG
 
 int main()
 {
@@ -353,98 +330,60 @@ int main()
         int priority = item["priority"].get<int>();
         json &j = config.programs->operator[](name);
         auto program = new Program(name, j, startTime, &config, retort, priority);
-// #ifdef PASSING_POINT 
-//         if (priority == 99) {
-//             programPassingPoint = program;
-//             continue;
-//         }
-//          if (i == 0)
-// #endif
+#ifdef PASSING_POINT 
+        if (priority == 99) {
+            programPassingPoint = program;
+            continue;
+        }
+#endif
         v.push_back(program);
     }
 
     // sort by start_time and priority
     std::sort(v.begin(), v.end(), compare);
 
-    // resolve conflicts, no passing point
-    ssize_t len = (ssize_t)v.size();
- 
-    for (ssize_t i = 1; i < len; ++i) {
-        // FIXME
-#if 0
-        if (v[i]->calculationStartTime() < v[i - 1]->calculationStartTime() 
-            && v[i]->startTime != v[i -1]->startTime
-             && v[i]->priority > v[i - 1]->priority) {
-                // v[i -1]->printStartTime();
-                // v[i]->printStartTime();
-
-            // v[i-1]->baseStep->offset = 0;
-            std::swap(v[i]->index, v[i - 1]->index);
-            std::swap(v[i], v[i -1]);
-
-            i = i - 2; 
-            continue;
-        }
-#endif
+    for (int i = 1; i < (int)v.size(); ++i) {
         int offsetBackup;
         do {
             offsetBackup = v[i]->baseStep->offset;
-            for (ssize_t j = 0; j < i; ++j)
+            for (int j = 0; j < i; ++j)
                 v[i]->resolveConflicts(v[j]);
         } while (offsetBackup != v[i]->baseStep->offset);
     }
 
 #ifdef DEBUG
-    for (auto p: v)
-        p->printTimingSequence();
+    // for (auto p: v)
+    //     p->printTimingSequence();
 #endif
 
 #ifdef PASSING_POINT
 // 1. Reverse overtaking point positioning
 //   1) update programPassingPoint offset
 //   2) search base program passing point
-    for (ssize_t i = v.size() - 1; i >= 0; --i) {
-        programPassingPoint->resolveConflictsWithPassingPoint(v[i]);
+    for (std::vector<Program *>::reverse_iterator it = v.rbegin(); it != v.rend(); ++it) {
+        programPassingPoint->resolveConflictsWithPassingPoint(*it);    
     }
 // 2. Add programPassingPoint to program container
-#if 0
-    programPassingPoint->setIndex(-1); 
-    v.push_back(programPassingPoint);
+    v.insert(v.begin(), programPassingPoint);
 
-    sort(v.begin(), v.end(), [](Program *p1, Program *p2) {
-        return (p1->index < p2->index);
-    });
-    // update index
-    for (size_t i = 0; i < v.size(); ++i)
-        v[i]->setIndex(i);
-// 3. Rearrange program  
-    // for (ssize_t i = 1; i < (ssize_t)v.size(); ++i) {       
-        // int offsetBackup;
-        // do {
-        //     offsetBackup = v[i]->baseStep->offset;
-            // for (ssize_t j = i - 1; j >=0; --j)
-                // v[i]->resolveConflicts(v[i-1]);
-        // } while (offsetBackup != v[i]->baseStep->offset);
-    // } 
-    
-    v[1]->resolveConflicts(v[0]);
+// 3. Rearrange program
+    for (int i = 1; i < (int)v.size(); ++i) {
+        int offsetBackup;
+        do {
+            offsetBackup = v[i]->baseStep->offset;
+            for (int j = 0; j < i; ++j)
+                v[i]->resolveConflicts(v[j]);
+        } while (offsetBackup != v[i]->baseStep->offset);
+    }
 #endif
 
-    programPassingPoint->setIndex(-1);
-    vector<Program *> vv;
-    vv.push_back(programPassingPoint);
-    for (size_t i = 0; i < v.size(); ++i)
-        vv.push_back(v[i]);
-    for (size_t i = 1; i < vv.size(); ++i)
-        vv[i]->resolveConflicts(vv[i - 1]);
-    
-
-
+#ifdef DEBUG
+    for (auto p: v)
+        p->printTimingSequence();
 #endif
 
-    for (size_t i = 0; i < vv.size(); ++i)
-        vv[i]->printTimingSequence();
-
+    // remember to free all resources
+    
     pause();
 
     return 0;
