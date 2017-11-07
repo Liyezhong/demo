@@ -44,10 +44,12 @@ private:
     json _config;
 };
 
+class Program;
+
 struct Step {
-    Step(json &j, bool passingPoint_): offset(0),passingPoint(passingPoint_)
+    Step(json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_)
     {
-        id = j["id"].get<int>();
+        // id = j["id"].get<int>();
         reagent = j["reagent"].get<std::string>().substr(1);
         duration = j["duration"].get<int>() * 60;
         temperature = j["temperature"].get<int>();
@@ -59,7 +61,6 @@ struct Step {
     {
         return ("id : " + std::to_string(id) + "\nreagent : " + reagent + "\nduration : " + std::to_string(duration) + "\ntemperature : "
             + "\npressure : " + std::to_string(is_pressure) + "\nvacuum : " + std::to_string(is_vacuum));
-
     }
 
     bool isPassingPoint()
@@ -82,6 +83,8 @@ struct Step {
     int step_time;
     int offset; // for passing point
     bool passingPoint;
+
+    Program *parent;
 };
 
 class Program {
@@ -91,9 +94,12 @@ public:
     {
         for (size_t i = 0; i < _j.size(); ++i) {
             auto s = new Step(_j[i], config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
+            s->id = i;
+            s->parent = this;
             steps.insert(make_pair(i, s));
         }
 
+        // FIXME
         baseStep = steps[0];
 
         struct tm tm_ = {0};
@@ -136,7 +142,7 @@ public:
 
     std::string dumpEndTime()
     {
-        endTime = startTime;
+        int endTime = startTime;
 
         for (size_t i = 0; i < steps.size(); ++i)
             endTime += steps[i]->getTotalTime();
@@ -148,85 +154,43 @@ public:
         return std::string(buf);
     }
 
-
-    // void resolveConflicts(Program *base)
-    // {
-    //     // FIXME, There may be a bug here.
-    //     if ((base->startTime + base->steps[0]->offset) > startTime 
-    //             && abs(base->index - this->index) == 1)
-    //         this->steps[0]->offset = base->startTime + base->steps[0]->offset - startTime;
-
-    //     int offsetBackup;
-    //     do {
-    //         offsetBackup = this->steps[0]->offset;
-    //         for (size_t i = 0; i < steps.size(); ++i) {
-    //             int j = base->find(steps[i]);
-
-    //             if (j == -1)
-    //                 continue;
-
-    //             int baseLow, baseHigh;
-    //             int curLow, curHigh;
-
-    //             base->sumSteps(j, baseLow, baseHigh);
-    //             this->sumSteps(i, curLow, curHigh);
-
-    //             int len = baseHigh - curLow;
-    //             if ((len >= base->steps[j]->duration + steps[i]->duration) || len <= 0)
-    //                 continue;
-    //             this->steps[0]->offset += len;
-    //         }
-    //     } while (offsetBackup != this->steps[0]->offset);
-    // }
-
     void resolveConflicts(Program *base)
     {
-        // FIXME, There may be a bug here.
-        printf("hello\n");
-        if ((base->calculationBaseTime()) > calculationBaseTime() 
-                && abs(base->index - this->index) == 1)
-            this->baseStep->offset = base->calculationBaseTime() - calculationBaseTime();
-
         int offsetBackup;
         do {
             offsetBackup = this->baseStep->offset;
-            for (size_t i = 0; i < steps.size(); ++i) {
-                int j = base->find(steps[i]);
-
+            for (size_t i = 0; i < this->steps.size(); ++i) {
+                if (this->steps[i]->isPassingPoint() == true)
+                    continue;
+                int j = base->find(this->steps[i]);
                 if (j == -1)
                     continue;
 
-                int baseLow, baseHigh;
-                int curLow, curHigh;
-
-                base->sumSteps(j, baseLow, baseHigh);
-                this->sumSteps(i, curLow, curHigh);
-
-                int len = baseHigh - curLow;
-                if ((len >= base->steps[j]->duration + steps[i]->duration) || len <= 0)
-                    continue;
-                this->baseStep->offset += len;
+                int len;
+                if (isIntersection(base->steps[j], this->steps[i], len) == true)
+                    this->baseStep->offset += len;
             }
         } while (offsetBackup != this->baseStep->offset);
     }
 
     int searchPassingPointStartStep(Program *base)
     {
-        for (size_t i = 0; i < steps.size(); ++i) {
+        for (int i = 0; i < base->steps.size(); ++i) {
             int baseLow, baseHigh;
-            base->sumSteps(i, baseLow, baseHigh);
-            if (startTime >= baseLow && startTime < baseHigh)
+            // FIXME, there is a bug here.
+            base->sumSteps(base->steps[i], baseLow, baseHigh);
+            if (this->startTime >= baseLow && this->startTime < baseHigh)
                 return i;
         }
         return -1;
     }
 
-    void searchPassingPoint(Program *base)
+    void resolveConflictsWithPassingPoint(Program *base)
     {
-        int ret = searchPassingPointStartStep(base);
+        int ret = this->searchPassingPointStartStep(base);
         if (ret == -1)
             return;
-        for (ssize_t i = ret; i < (ssize_t)base->steps.size(); ++i) {
+        for (int i = ret; i < (int)base->steps.size(); ++i) {
             if (base->steps[i]->isPassingPoint() == true) {
                 // here is passing point
                 base->baseStep = base->steps[i];
@@ -236,33 +200,54 @@ public:
             if (j == -1)
                 continue;
 
-            int baseLow, baseHigh;
-            int curLow, curHigh;
-
-            base->sumSteps(i, baseLow, baseHigh);
-            this->sumSteps(j, curLow, curHigh);
-            int len = baseHigh - curLow;
-            if ((len >= base->steps[i]->duration + steps[j]->duration) || len <= 0)
-                continue;
-            this->baseStep->offset += len;   
+            int len;
+            if (isIntersection(base->steps[j], this->steps[i], len) == true)
+                this->baseStep->offset += len;
         }
     }
 
-    void sumSteps(int step, int &low, int &high)
+    // 如果要用len, 那么s1->parent必须是base program, 否则len会有问题
+    static bool isIntersection(Step *s1, Step *s2, int &len)
     {
-         int sum = startTime;
-         for (int i = 0; i < step; ++i)
-             sum += steps[i]->getTotalTime();
-         low = sum;
-         sum += steps[step]->getTotalTime();
-         high = sum;
+        int baseLow, baseHigh;
+        int otherLow, otherHigh;
+
+        Program *base = s1->parent;
+        Program *other = s2->parent;
+
+        base->sumSteps(s1, baseLow, baseHigh);
+        other->sumSteps(s2, otherLow, otherHigh);
+        len = baseHigh - otherLow;
+        if ((len >= base->steps[s1->id]->duration + other->steps[s2->id]->duration)
+             || len <= 0)
+            return false;
+        return true;       
+    }
+
+    void sumSteps(Step *s, int &low, int &high)
+    {
+        int sum = startTime;
+
+        int index;
+        if (s->parent != this) {
+            index = find(s);
+            if (index == -1)
+                return;
+        } else {
+            index = s->id;
+        }
+
+        for (int i = 0; i < index; ++i)
+            sum += steps[i]->getTotalTime();
+        low = sum;
+        sum += steps[index]->getTotalTime();
+        high = sum;         
     }
 
     int find(Step *target)
     {
         int ret = -1;
-        if (target->isPassingPoint() == true)
-            return ret;
+
         for (size_t i = 0; i < steps.size(); ++i) {
             if (steps[i]->reagent == target->reagent) {
                 ret = i;
@@ -285,28 +270,37 @@ public:
 
     void setBaseStep(Step *s)
     {
+        if (s->parent != this)
+            return;
         baseStep = s;
     }
 
+    // start time 到 basestep所用的时间, 包括basestep时间
     int calculationBaseTime()
-    {
-        int sum = startTime;
-        std::map<int, Step *>::iterator it = steps.begin();
-
-        while (it->second != baseStep && it != steps.end())
-            sum += it->second->getTotalTime();
-
-        return sum;    
-    }
-
-    int calculationStartTime()
     {
         int sum = startTime;
         std::map<int, Step *>::iterator it = steps.begin();
 
         do {
             sum += it->second->getTotalTime();
-        } while (it->second != baseStep && it != steps.end());           
+            if (it->second == baseStep)
+                break;
+            it++;
+        } while (it != steps.end());
+
+        return sum;    
+    }
+
+    // start time 到 basestep所用的时间, 不包括basestep时间
+    int calculationStartTime()
+    {
+        int sum = startTime;
+        std::map<int, Step *>::iterator it = steps.begin();
+
+        while (it->second != baseStep && it != steps.end()) {
+            sum += it->second->getTotalTime();
+            it++;
+        }        
 
         return sum;    
     }
@@ -327,9 +321,15 @@ public:
 int compare(Program *p1, Program *p2)
 {
     // FIXME
-    return (((p1->calculationStartTime()) < (p2->calculationStartTime()))
-            || (((p1->calculationStartTime()) == (p2->calculationStartTime()))
-             && (p1->priority > p2->priority)));
+    int len;
+    if (Program::isIntersection(p1->baseStep, p2->baseStep, len) == true) {
+        if (p1->priority == p2->priority)
+            return p1->calculationStartTime() < p2->calculationStartTime();
+        else
+            return p1->priority > p2->priority;
+    } else {
+        return p1->calculationStartTime() < p2->calculationStartTime();
+    }
 }
 
 #define PASSING_POINT
@@ -344,7 +344,7 @@ int main()
 
     // load program from configuration
     auto run = config.run;
-    vector<Program *> v;
+    std::vector<Program *> v;
     for (size_t i = 0; i < run->size(); ++i) {
         json &item = run->operator[](i);
         std::string name = item["program"].get<std::string>().substr(1);
@@ -353,27 +353,25 @@ int main()
         int priority = item["priority"].get<int>();
         json &j = config.programs->operator[](name);
         auto program = new Program(name, j, startTime, &config, retort, priority);
-#ifdef PASSING_POINT 
-        if (priority == 99) {
-            programPassingPoint = program;
-            continue;
-        }
-#endif
+// #ifdef PASSING_POINT 
+//         if (priority == 99) {
+//             programPassingPoint = program;
+//             continue;
+//         }
+//          if (i == 0)
+// #endif
         v.push_back(program);
     }
 
     // sort by start_time and priority
-    sort(v.begin(), v.end(), compare);
-    // update index
-    for (size_t i = 0; i < v.size(); ++i)
-        v[i]->setIndex(i);
+    std::sort(v.begin(), v.end(), compare);
 
     // resolve conflicts, no passing point
     ssize_t len = (ssize_t)v.size();
  
     for (ssize_t i = 1; i < len; ++i) {
         // FIXME
-#if 1
+#if 0
         if (v[i]->calculationStartTime() < v[i - 1]->calculationStartTime() 
             && v[i]->startTime != v[i -1]->startTime
              && v[i]->priority > v[i - 1]->priority) {
@@ -387,21 +385,26 @@ int main()
             i = i - 2; 
             continue;
         }
-#endif        
+#endif
         int offsetBackup;
         do {
             offsetBackup = v[i]->baseStep->offset;
-            for (ssize_t j = i - 1; j >=0; --j)
+            for (ssize_t j = 0; j < i; ++j)
                 v[i]->resolveConflicts(v[j]);
         } while (offsetBackup != v[i]->baseStep->offset);
     }
+
+#ifdef DEBUG
+    for (auto p: v)
+        p->printTimingSequence();
+#endif
 
 #ifdef PASSING_POINT
 // 1. Reverse overtaking point positioning
 //   1) update programPassingPoint offset
 //   2) search base program passing point
     for (ssize_t i = v.size() - 1; i >= 0; --i) {
-        programPassingPoint->searchPassingPoint(v[i]);
+        programPassingPoint->resolveConflictsWithPassingPoint(v[i]);
     }
 // 2. Add programPassingPoint to program container
 #if 0
@@ -426,12 +429,14 @@ int main()
     
     v[1]->resolveConflicts(v[0]);
 #endif
+
     programPassingPoint->setIndex(-1);
     vector<Program *> vv;
     vv.push_back(programPassingPoint);
     for (size_t i = 0; i < v.size(); ++i)
         vv.push_back(v[i]);
-    // vv[1]->resolveConflicts(vv[0]);
+    for (size_t i = 1; i < vv.size(); ++i)
+        vv[i]->resolveConflicts(vv[i - 1]);
     
 
 
