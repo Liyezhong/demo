@@ -12,6 +12,9 @@
 using json = nlohmann::json;
 using namespace std;
 
+int __debug__ = 1;
+int __passingPoint__ = 0;
+
 class Configuration {
 public:
     Configuration()
@@ -105,6 +108,15 @@ public:
         struct tm tm_ = {0};
         strptime(startTime_.c_str(), "%Y-%m-%d %H:%M:%S", &tm_);
         startTime = mktime(&tm_);
+    }
+
+    ~Program()
+    {
+        std::map<int, Step *>::iterator it;
+        for (it = steps.begin(); it != steps.end();) {
+            delete it->second;
+            steps.erase(it++);
+        }
     }
 
     void printTimingSequence()
@@ -204,7 +216,8 @@ public:
         }
     }
 
-    // 如果要用len, 那么s1->parent必须是base program, 否则len会有问题
+    // len:
+    //      If you want to use the 'len', then s1->parent must be equal to base program.
     static bool isIntersection(Step *s1, Step *s2, int &len)
     {
         int baseLow, baseHigh;
@@ -219,7 +232,7 @@ public:
         if ((len >= base->steps[s1->id]->duration + other->steps[s2->id]->duration)
              || len <= 0)
             return false;
-        return true;       
+        return true;
     }
 
     void sumSteps(Step *s, int &low, int &high)
@@ -239,7 +252,7 @@ public:
             sum += steps[i]->getTotalTime();
         low = sum;
         sum += steps[index]->getTotalTime();
-        high = sum;         
+        high = sum;
     }
 
     int find(Step *target)
@@ -268,7 +281,7 @@ public:
         baseStep = s;
     }
 
-    // start time 到 basestep所用的时间, 不包括basestep时间
+    // result is equal to startTime + ... + --> baseStep. Excluding basestep time
     int calculationStartTime()
     {
         int sum = startTime;
@@ -277,11 +290,11 @@ public:
         while (it->second != baseStep && it != steps.end()) {
             sum += it->second->getTotalTime();
             it++;
-        }        
+        }
 
-        return sum;    
+        return sum;
     }
-    
+
 public:
     int endTime;
     int runTime;
@@ -296,7 +309,6 @@ public:
 
 int compare(Program *p1, Program *p2)
 {
-    // FIXME
     int len;
     if (Program::isIntersection(p1->baseStep, p2->baseStep, len) == true) {
         if (p1->priority == p2->priority)
@@ -308,16 +320,86 @@ int compare(Program *p1, Program *p2)
     }
 }
 
-#define PASSING_POINT
-#define DEBUG
-
-int main()
+void resolveConflicts(std::vector<Program *> &v)
 {
+    for (int i = 1; i < (int)v.size(); ++i) {
+        int offsetBackup;
+        do {
+            offsetBackup = v[i]->baseStep->offset;
+            for (int j = 0; j < i; ++j)
+                v[i]->resolveConflicts(v[j]);
+        } while (offsetBackup != v[i]->baseStep->offset);
+    }
+}
+
+void printTimingSequence(std::vector<Program *> &v)
+{
+    if (__debug__ > 0) {
+        for (auto p: v)
+            p->printTimingSequence();
+    }
+}
+
+void destory(std::vector<Program *> &v)
+{
+    std::vector<Program *>::iterator it;
+    for (it = v.begin(); it != v.end();) {
+        delete *it;
+        v.erase(it++);
+    }
+}
+
+void outputReport(std::vector<Program *> &v)
+{
+    /*
+        e.g:
+    	"retort2" : {
+		"name" : "overnight",
+		"start_time": "",
+		"steps" : [
+			{ "reagent" : "", "duration" : 10 },
+
+		]
+	}
+    */
+    json report;
+    for (size_t i = 0; i < v.size(); ++i) {
+        report[i]["retort"] = v[i]->retort;
+        report[i]["name"] = v[i]->getName();
+        report[i]["start_time"] = v[i]->startTime;
+        for (size_t j = 0; j < v[i]->steps.size(); ++j) {
+            report[i]["steps"][j]["reagent"] = v[i]->config->reagents->operator[]
+                (v[i]->steps[j]->reagent).operator[]("name").get<std::string>();
+            report[i]["steps"][j]["duration"] = v[i]->steps[j]->getTotalTime();		
+        }
+    }
+
+    std::ofstream o("report.json");
+    o << std::setw(4) << report << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+    int option;
+    while ((option = getopt(argc, argv, "d:p")) != -1) {
+        switch (option) {
+        case 'd':
+            // enable/disable debug
+            __debug__ = atoi(optarg);
+            break;
+        case 'p':
+            // enable passing point
+            __passingPoint__ = 1;
+            break;
+        default:
+            // Unknown option
+            break;
+        }
+    }
+
     auto config = Configuration();
 
-#ifdef PASSING_POINT     
     Program *programPassingPoint = nullptr;
-#endif
 
     // load program from configuration
     auto run = config.run;
@@ -330,61 +412,44 @@ int main()
         int priority = item["priority"].get<int>();
         json &j = config.programs->operator[](name);
         auto program = new Program(name, j, startTime, &config, retort, priority);
-#ifdef PASSING_POINT 
-        if (priority == 99) {
-            programPassingPoint = program;
-            continue;
+
+        if (__passingPoint__ == 1) {
+            if (priority == 99) {
+                programPassingPoint = program;
+                continue;
+            }
         }
-#endif
+
         v.push_back(program);
     }
 
     // sort by start_time and priority
     std::sort(v.begin(), v.end(), compare);
 
-    for (int i = 1; i < (int)v.size(); ++i) {
-        int offsetBackup;
-        do {
-            offsetBackup = v[i]->baseStep->offset;
-            for (int j = 0; j < i; ++j)
-                v[i]->resolveConflicts(v[j]);
-        } while (offsetBackup != v[i]->baseStep->offset);
+    resolveConflicts(v);
+
+    if (__passingPoint__ == 1) {
+    // 1. Reverse overtaking point positioning
+    //   1) update programPassingPoint offset
+    //   2) search base program passing point
+        for (std::vector<Program *>::reverse_iterator it = v.rbegin();
+                it != v.rend(); ++it) {
+            programPassingPoint->resolveConflictsWithPassingPoint(*it);
+        }
+
+    // 2. Add programPassingPoint to program container
+        v.insert(v.begin(), programPassingPoint);
+
+    // 3. Rearrange program
+        resolveConflicts(v);
     }
 
-#ifdef DEBUG
-    // for (auto p: v)
-    //     p->printTimingSequence();
-#endif
+    printTimingSequence(v);
 
-#ifdef PASSING_POINT
-// 1. Reverse overtaking point positioning
-//   1) update programPassingPoint offset
-//   2) search base program passing point
-    for (std::vector<Program *>::reverse_iterator it = v.rbegin(); it != v.rend(); ++it) {
-        programPassingPoint->resolveConflictsWithPassingPoint(*it);    
-    }
-// 2. Add programPassingPoint to program container
-    v.insert(v.begin(), programPassingPoint);
-
-// 3. Rearrange program
-    for (int i = 1; i < (int)v.size(); ++i) {
-        int offsetBackup;
-        do {
-            offsetBackup = v[i]->baseStep->offset;
-            for (int j = 0; j < i; ++j)
-                v[i]->resolveConflicts(v[j]);
-        } while (offsetBackup != v[i]->baseStep->offset);
-    }
-#endif
-
-#ifdef DEBUG
-    for (auto p: v)
-        p->printTimingSequence();
-#endif
+    outputReport(v);
 
     // remember to free all resources
-    
-    pause();
+    destory(v);
 
     return 0;
 }

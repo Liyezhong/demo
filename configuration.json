@@ -1,7 +1,7 @@
 {
     "reagents" : {
         "r1" :  { "name" : "formalin", "number" : 4, "passing_point" : true },
-        "r2" :  { "name" : "ethanol 70%", "number" : 1, "passing_point" : false },
+        "r2" :  { "name" : "ethanol 70%", "number" : 1, "passing_point" : true },
         "r3" :  { "name" : "ethanol 80%", "number" : 1, "passing_point" : false },
         "r4" :  { "name" : "ethanol 90%", "number" : 1, "passing_point" : false },
         "r5" :  { "name" : "ethanol 95%", "number" : 1, "passing_point" : false },
