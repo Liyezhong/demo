@@ -17,6 +17,8 @@ namespace PROGRAM {
     static int __debug__ = 1;
     static int __passingPoint__ = 0;
 
+    class Program;
+
     class Configuration {
     public:
         Configuration()
@@ -49,8 +51,6 @@ namespace PROGRAM {
         json _config;
     };
 
-    class Program;
-
     struct Step {
         Step(json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_)
         {
@@ -60,6 +60,7 @@ namespace PROGRAM {
             temperature = j["temperature"].get<int>();
             is_pressure = (j["pressure"].get<std::string>() == "on") ? true : false;
             is_vacuum = (j["vacuum"].get<std::string>() == "on") ? true : false;
+            extensionTime = j["extension_time"].get<int>();
         }
 
         std::string dump()
@@ -73,9 +74,38 @@ namespace PROGRAM {
             return passingPoint;
         }
 
-        int getTotalTime()
+        int getStepTime()
         {
-            return offset + duration;
+            return duration + offset;
+        }
+
+        bool isOverExtensionTime()
+        {
+            return offset > extensionTime;
+        }
+
+        int getStartTime()
+        {
+            if (parent == nullptr)
+                return 0;
+
+            int startTime = parent->startTime;
+
+            for (int i = 0; i < this->id; ++i)
+                startTime += parent->steps[i]->getStepTime();
+            
+            return startTime;            
+        }
+
+        int getEndTime()
+        {
+            return this->getStartTime() + this->getStepTime();
+        }
+
+        void getStartTimeAndEndTime(int& startTime, int& endTime)
+        {
+            startTime = this->getStartTime();
+            endTime = startTime + this->getStepTime();     
         }
 
         int id;
@@ -90,6 +120,16 @@ namespace PROGRAM {
         bool passingPoint;
 
         Program *parent;
+
+        //
+        int start_time;
+        int start_time_offset;
+        int end_time;
+        int end_time_offset;
+
+        int extensionTime;
+
+        //
     };
 
     class Program {
@@ -132,7 +172,7 @@ namespace PROGRAM {
             for (size_t i = 0; i < steps.size(); ++i) {
                 struct tm *t = localtime((time_t *)&time_sum);
                 strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
-                time_sum += steps[i]->getTotalTime();
+                time_sum += steps[i]->getStepTime();
                 printf("%s: reagent: %s\n", buf,
                     config->reagents->operator[](steps[i]->reagent).operator[]("name").get<std::string>().c_str());
             }
@@ -146,7 +186,7 @@ namespace PROGRAM {
             time_t time_sum = startTime;
             char buf[30] = {0};
 
-            time_sum += steps[0]->getTotalTime();
+            time_sum += steps[0]->getStepTime();
             struct tm *t = localtime((time_t *)&time_sum);
             strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
 
@@ -159,7 +199,7 @@ namespace PROGRAM {
             int endTime = startTime;
 
             for (size_t i = 0; i < steps.size(); ++i)
-                endTime += steps[i]->getTotalTime();
+                endTime += steps[i]->getStepTime();
 
             char buf[30] = {0};
             struct tm *t = localtime((time_t *)&endTime);
@@ -190,9 +230,9 @@ namespace PROGRAM {
         int searchPassingPointStartStep(Program *base)
         {
             for (int i = 0; i < (int)base->steps.size(); ++i) {
-                int baseLow, baseHigh;
-                base->sumSteps(base->steps[i], baseLow, baseHigh);
-                if (this->startTime >= baseLow && this->startTime < baseHigh)
+                int baseStepStartTime, baseStepEndTime;
+                base->steps[i]->getStartTimeAndEndTime(baseStepStartTime, baseStepEndTime);
+                if (this->startTime >= baseStepStartTime && this->startTime < baseStepEndTime)
                     return i;
             }
             return -1;
@@ -222,39 +262,20 @@ namespace PROGRAM {
         //      If you want to use the 'len', then s1->parent must be equal to base program.
         static bool isIntersection(Step *s1, Step *s2, int &len)
         {
-            int baseLow, baseHigh;
-            int otherLow, otherHigh;
+            int baseStepStartTime = s1->getStartTime();
+            int baseStepEndTime = s1->getEndTime();
+
+            int otherStepStartTime = s2->getStartTime();
+            int otherStepEndTime = s2->getEndTime();
 
             Program *base = s1->parent;
             Program *other = s2->parent;
 
-            base->sumSteps(s1, baseLow, baseHigh);
-            other->sumSteps(s2, otherLow, otherHigh);
-            len = baseHigh - otherLow;
+            len = baseStepEndTime - otherStepStartTime;
             if ((len >= base->steps[s1->id]->duration + other->steps[s2->id]->duration)
                  || len <= 0)
                 return false;
             return true;
-        }
-
-        void sumSteps(Step *s, int &low, int &high)
-        {
-            int sum = startTime;
-
-            int index;
-            if (s->parent != this) {
-                index = find(s);
-                if (index == -1)
-                    return;
-            } else {
-                index = s->id;
-            }
-
-            for (int i = 0; i < index; ++i)
-                sum += steps[i]->getTotalTime();
-            low = sum;
-            sum += steps[index]->getTotalTime();
-            high = sum;
         }
 
         int find(Step *target)
@@ -290,7 +311,7 @@ namespace PROGRAM {
             std::map<int, Step *>::iterator it = steps.begin();
 
             while (it->second != baseStep && it != steps.end()) {
-                sum += it->second->getTotalTime();
+                sum += it->second->getStepTime();
                 it++;
             }
 
@@ -372,7 +393,7 @@ namespace PROGRAM {
             for (size_t j = 0; j < v[i]->steps.size(); ++j) {
                 report[i]["steps"][j]["reagent"] = v[i]->config->reagents->operator[]
                     (v[i]->steps[j]->reagent).operator[]("name").get<std::string>();
-                report[i]["steps"][j]["duration"] = v[i]->steps[j]->getTotalTime();
+                report[i]["steps"][j]["duration"] = v[i]->steps[j]->getStepTime();
             }
         }
 
