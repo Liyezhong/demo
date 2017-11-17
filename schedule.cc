@@ -18,6 +18,7 @@ namespace PROGRAM {
     static int __passingPoint__ = 0;
 
     class Program;
+    class Step;
 
     class Configuration {
     public:
@@ -52,6 +53,7 @@ namespace PROGRAM {
     };
 
     struct Step {
+        
         Step(json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_)
         {
             // id = j["id"].get<int>();
@@ -84,28 +86,17 @@ namespace PROGRAM {
             return offset > extensionTime;
         }
 
-        int getStartTime()
-        {
-            if (parent == nullptr)
-                return 0;
-
-            int startTime = parent->startTime;
-
-            for (int i = 0; i < this->id; ++i)
-                startTime += parent->steps[i]->getStepTime();
-            
-            return startTime;            
-        }
+        int getStartTime();
 
         int getEndTime()
         {
-            return this->getStartTime() + this->getStepTime();
+            return getStartTime() + getStepTime();
         }
 
         void getStartTimeAndEndTime(int& startTime, int& endTime)
         {
-            startTime = this->getStartTime();
-            endTime = startTime + this->getStepTime();     
+            startTime = getStartTime();
+            endTime = startTime + getStepTime();     
         }
 
         int id;
@@ -133,8 +124,12 @@ namespace PROGRAM {
     };
 
     class Program {
+        friend struct Step;
+        friend int compare(Program *p1, Program *p2);
+        friend void resolveConflicts(std::vector<Program *> &v);
+        friend void outputReport(std::vector<Program *> &v);
     public:
-        Program(std::string _name, json &_j, std::string startTime_, Configuration *config_, int retort_, int priority_)
+        Program(std::string _name, json& _j, std::string startTime_, Configuration *config_, int retort_, int priority_)
             : endTime(0), name(_name), config(config_), retort(retort_), priority(priority_)
         {
             for (size_t i = 0; i < _j.size(); ++i) {
@@ -160,7 +155,8 @@ namespace PROGRAM {
                 steps.erase(it++);
             }
         }
-
+    
+    public:
         void printTimingSequence()
         {
             printf("\n\n------------------------------------------\n");
@@ -170,7 +166,7 @@ namespace PROGRAM {
             char buf[30] = {0};
 
             for (size_t i = 0; i < steps.size(); ++i) {
-                struct tm *t = localtime((time_t *)&time_sum);
+                struct tm *t = localtime(reinterpret_cast<time_t *>(&time_sum));
                 strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
                 time_sum += steps[i]->getStepTime();
                 printf("%s: reagent: %s\n", buf,
@@ -187,7 +183,7 @@ namespace PROGRAM {
             char buf[30] = {0};
 
             time_sum += steps[0]->getStepTime();
-            struct tm *t = localtime((time_t *)&time_sum);
+            struct tm *t = localtime(reinterpret_cast<time_t *>(&time_sum));
             strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
 
             printf("%s: reagent: %s\n", buf,
@@ -196,13 +192,9 @@ namespace PROGRAM {
 
         std::string dumpEndTime()
         {
-            int endTime = startTime;
-
-            for (size_t i = 0; i < steps.size(); ++i)
-                endTime += steps[i]->getStepTime();
-
+            int endTime = getEndTime();
             char buf[30] = {0};
-            struct tm *t = localtime((time_t *)&endTime);
+            struct tm *t = localtime(reinterpret_cast<time_t *>(&endTime));
             strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
 
             return std::string(buf);
@@ -262,17 +254,14 @@ namespace PROGRAM {
         //      If you want to use the 'len', then s1->parent must be equal to base program.
         static bool isIntersection(Step *s1, Step *s2, int &len)
         {
-            int baseStepStartTime = s1->getStartTime();
-            int baseStepEndTime = s1->getEndTime();
-
-            int otherStepStartTime = s2->getStartTime();
-            int otherStepEndTime = s2->getEndTime();
-
             Program *base = s1->parent;
             Program *other = s2->parent;
+            
+            int baseStepEndTime = s1->getEndTime();
+            int otherStepStartTime = s2->getStartTime();
 
             len = baseStepEndTime - otherStepStartTime;
-            if ((len >= base->steps[s1->id]->duration + other->steps[s2->id]->duration)
+            if ((len >= base->steps[s1->id]->getStepTime() + other->steps[s2->id]->getStepTime())
                  || len <= 0)
                 return false;
             return true;
@@ -318,7 +307,17 @@ namespace PROGRAM {
             return sum;
         }
 
-    public:
+        int getStartTime()
+        {
+            return startTime;
+        }
+
+        int getEndTime()
+        {
+            return steps[steps.size() - 1]->getEndTime();         
+        }
+
+    private:
         int endTime;
         int runTime;
         int startTime;
@@ -329,6 +328,19 @@ namespace PROGRAM {
         int retort;
         int priority;
     };
+
+    int Step::getStartTime()
+    {
+        if (this->parent == nullptr)
+            return 0;
+
+        int startTime = this->parent->getStartTime();
+
+        for (int i = 0; i < this->id; ++i)
+            startTime += this->parent->steps[i]->getStepTime();
+        
+        return startTime;            
+    }
 
     int compare(Program *p1, Program *p2)
     {
@@ -399,6 +411,7 @@ namespace PROGRAM {
 
         std::ofstream o("report.json");
         o << std::setw(4) << report << std::endl;
+        o.close();
     }
 }
 

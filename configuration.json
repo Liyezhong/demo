@@ -1,25 +1,30 @@
 {
     "reagents" : {
-        "r1" :  { "name" : "formalin", "number" : 4, "passing_point" : true },
-        "r2" :  { "name" : "ethanol 70%", "number" : 1, "passing_point" : true },
-        "r3" :  { "name" : "ethanol 80%", "number" : 1, "passing_point" : false },
-        "r4" :  { "name" : "ethanol 90%", "number" : 1, "passing_point" : false },
-        "r5" :  { "name" : "ethanol 95%", "number" : 1, "passing_point" : false },
-        "r6_1" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : true },
-        "r6_1_1" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : true },
-        "r6_2" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : false },
-        "r6_3" :  { "name" : "ethanol 100%", "number" : 1, "passing_point" : false },
-        "r7_1" :  { "name" : "xylene", "number" : 1, "passing_point" : true },
-        "r7_1_1" :  { "name" : "xylene", "number" : 1, "passing_point" : true },
-        "r7_2" :  { "name" : "xylene", "number" : 1, "passing_point" : false },
-        "r7_3" :  { "name" : "xylene", "number" : 1, "passing_point" : false },
-        "r8_1" :  { "name" : "paraffin", "number" : 1, "passing_point" : true },
-        "r8_1_1" :  { "name" : "paraffin", "number" : 1, "passing_point" : true },
-        "r8_2" :  { "name" : "paraffin", "number" : 1, "passing_point" : false },
-        "r8_3" :  { "name" : "paraffin", "number" : 1, "passing_point" : false },
-        "r9" :  { "name" : "processing water", "number" : 1, "passing_point" : false },
-        "r10" : { "name" : "cleaning xylene", "number" : 1, "passing_point" : false },
-        "r11" : { "name" : "cleaning alcohol", "number" : 1, "passing_point" : false }
+        "r1" :  { "name" : "formalin", "passing_point" : true,
+                     "sub_id" : [ "r1_0_0", "r1_0_1", "r1_0_2", "r1_0_3" ] },
+        "r2" :  { "name" : "ethanol 70%", "passing_point" : true,
+                     "sub_id" : [ "r2_0_0", "r2_0_1", "r2_0_2", "r2_0_3" ] },
+
+        "r3" :  { "name" : "ethanol 80%", "passing_point" : false },
+        "r4" :  { "name" : "ethanol 90%", "passing_point" : false },
+        "r5" :  { "name" : "ethanol 95%", "passing_point" : false },
+        "r6" :  { "name" : "ethanol 100%", "passing_point" : false },
+
+        "r7_0" :  { "name" : "xylene", "passing_point" : true,
+                     "sub_id" : [ "r7_0_0", "r7_0_1", "r7_0_2", "r7_0_3" ] },
+             
+        "r7_1" :  { "name" : "xylene", "passing_point" : false },
+        "r7_2" :  { "name" : "xylene", "passing_point" : false },
+
+        "r8_0" :  { "name" : "paraffin", "passing_point" : true,
+                     "sub_id" : [ "r7_0_0", "r7_0_1", "r7_0_2", "r7_0_3" ] },            
+
+        "r8_1" :  { "name" : "paraffin", "passing_point" : false },
+        "r8_2" :  { "name" : "paraffin", "passing_point" : false },
+
+        "r9" :  { "name" : "processing water", "passing_point" : false },
+        "r10" : { "name" : "cleaning xylene", "passing_point" : false },
+        "r11" : { "name" : "cleaning alcohol", "passing_point" : false }
     },
 
     "devices" : {
