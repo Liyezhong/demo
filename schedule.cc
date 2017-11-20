@@ -52,6 +52,42 @@ namespace PROGRAM {
         json _config;
     };
 
+    class TimeSlice {
+    public:
+        TimeSlice(std::string &name)
+            :name(name), startTime(0), duration(0), offset(0)
+        {
+
+        }
+
+    public:
+        virtual int getStartTime()
+        {
+
+        }
+        
+        virtual int getEndTime()
+        {
+
+        }
+        
+        bool isOverExtensionTime()
+        {
+            return offset > extensionTime;
+        }
+
+    protected:
+        std::string name;
+        int startTime;
+        int duration;
+        int offset;
+        int extensionTime;
+    };
+
+    struct Reagent {
+        std::vector<TimeSlice *> v;  
+    };
+
     struct Step {
         
         Step(json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_)
@@ -256,7 +292,7 @@ namespace PROGRAM {
         {
             Program *base = s1->parent;
             Program *other = s2->parent;
-            
+
             int baseStepEndTime = s1->getEndTime();
             int otherStepStartTime = s2->getStartTime();
 
