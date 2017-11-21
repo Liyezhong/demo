@@ -1,30 +1,47 @@
 {
     "reagents" : {
-        "r1" :  { "name" : "formalin", "passing_point" : true,
-                     "sub_id" : [ "r1_0_0", "r1_0_1", "r1_0_2", "r1_0_3" ] },
-        "r2" :  { "name" : "ethanol 70%", "passing_point" : true,
-                     "sub_id" : [ "r2_0_0", "r2_0_1", "r2_0_2", "r2_0_3" ] },
+        "r1_group" : [ "r1_0_0", "r1_0_1", "r1_0_2", "r1_0_3" ],
+        "r2_group" : [ "r2_0_0", "r2_0_1", "r2_0_2", "r2_0_3" ],
+        "r7_0_group" : [ "r7_0_0", "r7_0_1", "r7_0_2", "r7_0_3" ],
+        "r8_0_group" : [ "r8_0_0", "r8_0_1", "r8_0_2", "r8_0_3" ],                                           
 
-        "r3" :  { "name" : "ethanol 80%", "passing_point" : false },
-        "r4" :  { "name" : "ethanol 90%", "passing_point" : false },
-        "r5" :  { "name" : "ethanol 95%", "passing_point" : false },
-        "r6" :  { "name" : "ethanol 100%", "passing_point" : false },
+        "r1_0_0" :  { "name" : "formalin", "station" : "L1" },
+        "r1_0_1" :  { "name" : "formalin", "station" : "L2" },
+        "r1_0_2" :  { "name" : "formalin", "station" : "L3" },
+        "r1_0_3" :  { "name" : "formalin", "station" : "L4" },
 
-        "r7_0" :  { "name" : "xylene", "passing_point" : true,
-                     "sub_id" : [ "r7_0_0", "r7_0_1", "r7_0_2", "r7_0_3" ] },
-             
-        "r7_1" :  { "name" : "xylene", "passing_point" : false },
-        "r7_2" :  { "name" : "xylene", "passing_point" : false },
+        "r2_0_0" :  { "name" : "ethanol 70%", "station" : "L5" },
+        "r2_0_1" :  { "name" : "ethanol 70%", "station" : "L6" },
+        "r2_0_2" :  { "name" : "ethanol 70%", "station" : "L7" }, 
+        "r2_0_3" :  { "name" : "ethanol 70%", "station" : "L8" },                    
 
-        "r8_0" :  { "name" : "paraffin", "passing_point" : true,
-                     "sub_id" : [ "r7_0_0", "r7_0_1", "r7_0_2", "r7_0_3" ] },            
+        "r3" :  { "name" : "ethanol 80%", "station" : "L9" },
+        "r4" :  { "name" : "ethanol 90%", "station" : "L10" },
+        "r5" :  { "name" : "ethanol 95%", "station" : "L11" },
 
-        "r8_1" :  { "name" : "paraffin", "passing_point" : false },
-        "r8_2" :  { "name" : "paraffin", "passing_point" : false },
+        "r6_0" :  { "name" : "ethanol 100%", "station" : "L12" },
+        "r6_1" :  { "name" : "ethanol 100%", "station" : "L13" },
+        "r6_2" :  { "name" : "ethanol 100%", "station" : "L14" },
 
-        "r9" :  { "name" : "processing water", "passing_point" : false },
-        "r10" : { "name" : "cleaning xylene", "passing_point" : false },
-        "r11" : { "name" : "cleaning alcohol", "passing_point" : false }
+        "r7_0_0" :  { "name" : "xylene", "station" : "L15" },                     
+        "r7_0_1" :  { "name" : "xylene", "station" : "L16" },  
+        "r7_0_2" :  { "name" : "xylene", "station" : "L17" },                     
+        "r7_0_3" :  { "name" : "xylene", "station" : "L18" },         
+        
+        "r7_1" :  { "name" : "xylene", "station" : "L19" },
+        "r7_2" :  { "name" : "xylene", "station" : "L20" },
+           
+        "r8_0_0" :  { "name" : "paraffin", "station" : "L21" },
+        "r8_0_1" :  { "name" : "paraffin", "station" : "L22" },
+        "r8_0_2" :  { "name" : "paraffin", "station" : "L23" },
+        "r8_0_3" :  { "name" : "paraffin", "station" : "L24" },
+
+        "r8_1" :  { "name" : "paraffin", "station" : "L25" },
+        "r8_2" :  { "name" : "paraffin", "station" : "L26" },
+
+        "r9" :  { "name" : "processing water", "station" : "L27" },
+        "r10" : { "name" : "cleaning xylene", "station" : "L28" },
+        "r11" : { "name" : "cleaning alcohol", "station" : "L29" }
     },
 
     "devices" : {
@@ -122,15 +139,15 @@
                 { "id" : 2, "reagent" : "@r2", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 3, "reagent" : "@r3", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 4, "reagent" : "@r5", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 5, "reagent" : "@r6_1", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 6, "reagent" : "@r6_2", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 7, "reagent" : "@r6_3", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 8, "reagent" : "@r7_1", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 9, "reagent" : "@r7_2", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 10, "reagent" : "@r7_3", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 11, "reagent" : "@r8_1", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
-                { "id" : 12, "reagent" : "@r8_2", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
-                { "id" : 13, "reagent" : "@r8_3", "duration" : 90, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" }
+                { "id" : 5, "reagent" : "@r6_0", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 6, "reagent" : "@r6_1", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 7, "reagent" : "@r6_2", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 8, "reagent" : "@r7_0", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 9, "reagent" : "@r7_1", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 10, "reagent" : "@r7_2", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 11, "reagent" : "@r8_0", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
+                { "id" : 12, "reagent" : "@r8_1", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
+                { "id" : 13, "reagent" : "@r8_2", "duration" : 90, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" }
          ],
 
          "biopsy" : [
@@ -139,15 +156,15 @@
                 { "id" : 2, "reagent" : "@r2", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 3, "reagent" : "@r3", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 4, "reagent" : "@r5", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 5, "reagent" : "@r6_1", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 6, "reagent" : "@r6_2", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 7, "reagent" : "@r6_3", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 8, "reagent" : "@r7_1", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 9, "reagent" : "@r7_2", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 10, "reagent" : "@r7_3", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 11, "reagent" : "@r8_1", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 12, "reagent" : "@r8_2", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 13, "reagent" : "@r8_3", "duration" : 10, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" }
+                { "id" : 5, "reagent" : "@r6_0", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 6, "reagent" : "@r6_1", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 7, "reagent" : "@r6_2", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 8, "reagent" : "@r7_0", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 9, "reagent" : "@r7_1", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 10, "reagent" : "@r7_2", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 11, "reagent" : "@r8_0", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 12, "reagent" : "@r8_1", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 13, "reagent" : "@r8_2", "duration" : 10, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" }
         ]
     },
 

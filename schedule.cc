@@ -7,6 +7,7 @@
 #include <ctime>
 #include "json.hpp"
 #include <unistd.h>
+#include <memory>
 
 namespace PROGRAM {
 
@@ -22,7 +23,7 @@ namespace PROGRAM {
 
     class Configuration {
     public:
-        Configuration()
+        Configuration():
         {
             restore();
             reagents = &_config["reagents"];
@@ -41,6 +42,14 @@ namespace PROGRAM {
             in.close();
         }
 
+        static std::shared_ptr<Configuration> instance()
+        {
+            if (_instance == nullptr) {
+                _instance = std::make_shared<Configuration>();
+            }
+            return _instance;
+        }
+
     public:
         json *reagents;
         json *devices;
@@ -50,14 +59,31 @@ namespace PROGRAM {
 
     private:
         json _config;
+        static std::shared_ptr<Configuration> _instance;
     };
 
-    class TimeSlice {
+    template <typename T> class TimeSlice {
     public:
         TimeSlice(std::string &name)
             :name(name), startTime(0), duration(0), offset(0)
         {
 
+        }
+
+    public:
+        virtual int getStartTime()
+        {
+
+        }
+        
+        virtual int getEndTime()
+        {
+
+        }
+        
+        bool isOverExtensionTime()
+        {
+            return offset > extensionTime;
         }
 
     public:
@@ -82,11 +108,39 @@ namespace PROGRAM {
         int duration;
         int offset;
         int extensionTime;
+
+        T *parent;
     };
 
-    struct Reagent {
-        std::vector<TimeSlice *> v;  
+    class ReagentGroup {
+    public:
+        ReagentGroup()
+        {
+            auto reagentConfig = Configuration::instance()->reagents;
+        }
+
+        static std::shared_ptr<ReagentGroup> instance()
+        {
+            if (_instance == nullptr) {
+                _instance = std::make_shared<ReagentGroup>();
+            }
+            return _instance;      
+        }
+
+        std::shared_ptr<TimeSlice<ReagentGroup> > newTimeSlice(std::string& reagentKey)
+        {
+            std::shared_ptr<TimeSlice<ReagentGroup> > timeSlice = std::make_shared<TimeSlice<ReagentGroup> >(reagentKey);
+            timeSlice->getStartTime();
+            map.find(reagentKey);
+            
+            return timeSlice;  
+        }
+
+    private:
+        static std::shared_ptr<ReagentGroup> _instance; 
+        std::map<std::string, std::vector<std::shared_ptr<TimeSlice<ReagentGroup> > > > map;            
     };
+
 
     struct Step {
         
