@@ -126,13 +126,12 @@ namespace PROGRAM {
             auto& reagentConfig = config.reagents;
             for (json::iterator it = reagentConfig->begin(); it != reagentConfig->end(); ++it) {
                 if (it.key().rfind("_group") == it.key().length() - std::string("_group").length()) {
-                    // pattarn match string end with _group, e.g: "r1_group", "r7_0_group"
+                    // pattern match string end with _group, e.g: "r1_group", "r7_0_group"
                     std::shared_ptr<std::vector<std::string> > group = std::make_shared<std::vector<std::string> >();
                     for (auto& v: it.value()) {
                         group->push_back(v.get<std::string>());
                     }
                 } else {
-                    // pattarn match string end with _group, e.g: "r1_group", "r7_0_group"
                     std::shared_ptr<Reagent> reagent = std::make_shared<Reagent>();
                     reagent->key = it.key();
                     reagent->name = it.value()["name"].get<std::string>();
