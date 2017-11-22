@@ -20,10 +20,12 @@ namespace PROGRAM {
 
     class Program;
     class Step;
+    struct ReagentSoakTimeSlice;
+    struct DeviceOpsTimeSlice;
 
     class Configuration {
     public:
-        Configuration():
+        Configuration()
         {
             restore();
             reagents = &_config["reagents"];
@@ -33,6 +35,7 @@ namespace PROGRAM {
             run = &_config["run"];
         }
 
+    public:
         void restore()
         {
             _config.clear();
@@ -40,14 +43,6 @@ namespace PROGRAM {
             std::ifstream in("configuration.json");
             in >> _config;
             in.close();
-        }
-
-        static std::shared_ptr<Configuration> instance()
-        {
-            if (_instance == nullptr) {
-                _instance = std::make_shared<Configuration>();
-            }
-            return _instance;
         }
 
     public:
@@ -59,13 +54,14 @@ namespace PROGRAM {
 
     private:
         json _config;
-        static std::shared_ptr<Configuration> _instance;
     };
 
     template <typename T> class TimeSlice {
+        friend struct ReagentSoakTimeSlice;
+        friend struct DeviceOpsTimeSlice;
     public:
-        TimeSlice(std::string &name)
-            :name(name), startTime(0), duration(0), offset(0)
+        TimeSlice(T *parent)
+            :parent(parent), startTime(0), duration(0), offset(0)
         {
 
         }
@@ -73,12 +69,12 @@ namespace PROGRAM {
     public:
         virtual int getStartTime()
         {
-
+            return 0;
         }
         
         virtual int getEndTime()
         {
-
+            return 0;
         }
         
         bool isOverExtensionTime()
@@ -86,24 +82,7 @@ namespace PROGRAM {
             return offset > extensionTime;
         }
 
-    public:
-        virtual int getStartTime()
-        {
-
-        }
-        
-        virtual int getEndTime()
-        {
-
-        }
-        
-        bool isOverExtensionTime()
-        {
-            return offset > extensionTime;
-        }
-
-    protected:
-        std::string name;
+    private:
         int startTime;
         int duration;
         int offset;
@@ -112,34 +91,45 @@ namespace PROGRAM {
         T *parent;
     };
 
+#if 1
+    struct ReagentSoakTimeSlice {
+        std::shared_ptr<TimeSlice<ReagentSoakTimeSlice> > newTimeSlice()
+        {
+            std::shared_ptr<TimeSlice<ReagentSoakTimeSlice> > timeSlice
+                = std::make_shared<TimeSlice<ReagentSoakTimeSlice> >(this);
+        }
+        std::vector<std::shared_ptr<TimeSlice<ReagentSoakTimeSlice> > > container;
+        std::string name; 
+    }; 
+
+    struct DeviceOpsTimeSlice {
+        std::vector<std::shared_ptr<TimeSlice<DeviceOpsTimeSlice> > > container;
+        std::string name; 
+    };
+
     class ReagentGroup {
     public:
-        ReagentGroup()
+        ReagentGroup(Configuration& config)
         {
-            auto reagentConfig = Configuration::instance()->reagents;
-        }
-
-        static std::shared_ptr<ReagentGroup> instance()
-        {
-            if (_instance == nullptr) {
-                _instance = std::make_shared<ReagentGroup>();
-            }
-            return _instance;      
-        }
-
-        std::shared_ptr<TimeSlice<ReagentGroup> > newTimeSlice(std::string& reagentKey)
-        {
-            std::shared_ptr<TimeSlice<ReagentGroup> > timeSlice = std::make_shared<TimeSlice<ReagentGroup> >(reagentKey);
-            timeSlice->getStartTime();
-            map.find(reagentKey);
+            auto reagentConfig = config.reagents;
             
-            return timeSlice;  
+        }
+
+    public:
+        std::shared_ptr<TimeSlice<ReagentSoakTimeSlice> > create(std::string& reagentKey)
+        {
+            
+            // timeSlice->getStartTime();
+            // map.find(reagentKey);
+            
+            // return timeSlice;  
         }
 
     private:
-        static std::shared_ptr<ReagentGroup> _instance; 
-        std::map<std::string, std::vector<std::shared_ptr<TimeSlice<ReagentGroup> > > > map;            
+        std::map<std::string, std::vector<std::shared_ptr<ReagentSoakTimeSlice> > > map;
+        int reagentGroup;            
     };
+#endif
 
 
     struct Step {
@@ -525,6 +515,7 @@ int main(int argc, char *argv[])
     }
 
     auto config = PROGRAM::Configuration();
+    auto reagentGroup = PROGRAM::ReagentGroup(config);
 
     PROGRAM::Program *programPassingPoint = nullptr;
 
