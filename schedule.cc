@@ -119,9 +119,9 @@ namespace PROGRAM {
         std::string key; 
     };
 
-    class ReagentGroup {
+    class ReagentManager {
     public:
-        ReagentGroup(Configuration& config)
+        ReagentManager(Configuration& config)
         {
             auto& reagentConfig = config.reagents;
             for (json::iterator it = reagentConfig->begin(); it != reagentConfig->end(); ++it) {
@@ -143,6 +143,29 @@ namespace PROGRAM {
         }
 
     public:
+        bool GroupRequestReagent(Step *step)
+        {          
+            // auto it = groupMap.find(step->reagent);
+            // if (it == groupMap.end())
+            //     return false;
+            // std::shared_ptr<Reagent> target = map[it->second->at(0)];
+            // if (target->timeSlices.size() == 0) {
+
+            // }
+            // for (int i = 1; i < it->second->size(); ++i) {
+            //     std::string& reagentKey = it->second->at(i);
+            //     map[reagentKey]->timeSlices;
+            // }
+
+
+            return true;    
+        }
+
+    private:
+        inline bool isReagentGroup(Step *step)
+        {
+            return groupMap.find(step->reagent) == groupMap.end();
+        }        
 
 
     private:
@@ -181,7 +204,7 @@ namespace PROGRAM {
 
         bool isOverExtensionTime()
         {
-            return offset > extensionTime;
+            // return offset > extensionTime;
         }
 
         int getStartTime();
@@ -210,11 +233,14 @@ namespace PROGRAM {
 
         Program *parent;
 
+        std::shared_ptr<TimeSlice<Reagent> > reagentTimeSlice;
+        std::shared_ptr<TimeSlice<Device> > deviceTimeSlice;
+
         //
-        int start_time;
-        int start_time_offset;
-        int end_time;
-        int end_time_offset;
+        // int start_time;
+        // int start_time_offset;
+        // int end_time;
+        // int end_time_offset;
 
         int extensionTime;
 
@@ -533,7 +559,7 @@ int main(int argc, char *argv[])
     }
 
     auto config = PROGRAM::Configuration();
-    auto reagentGroup = PROGRAM::ReagentGroup(config);
+    auto reagentManager = PROGRAM::ReagentManager(config);
 
     return 0;
 
