@@ -22,6 +22,7 @@ namespace PROGRAM {
     class Step;
     struct Reagent;
     struct Device;
+    class ReagentManager;
 
     class Configuration {
     public:
@@ -52,6 +53,9 @@ namespace PROGRAM {
         json *programs;
         json *run;
 
+        ReagentManager *reagentManager;
+
+
     private:
         json _config;
     };
@@ -67,12 +71,12 @@ namespace PROGRAM {
         }
 
     public:
-        virtual int getStartTime()
+        int getStartTime()
         {
             return 0;
         }
         
-        virtual int getEndTime()
+        int getEndTime()
         {
             return 0;
         }
@@ -87,7 +91,7 @@ namespace PROGRAM {
         int duration;
         int offset;
         int extensionTime;
-
+    public:
         T *parent;
     };
 
@@ -99,6 +103,22 @@ namespace PROGRAM {
             timeSlices.push_back(timeSlice);
             return timeSlice;
         }
+
+        void freeTimeSlice(std::shared_ptr<TimeSlice<Reagent> >& t)
+        {
+            for (auto v = timeSlices.begin(); v != timeSlices.end(); ++v) {
+                if ((*v) == t) {
+                    timeSlices.erase(v);
+                    break;
+                }
+            }
+        }
+
+        inline auto getTimeSliceCount()
+        {
+            return timeSlices.size();
+        }
+
         std::vector<std::shared_ptr<TimeSlice<Reagent> > > timeSlices;
         std::string station;
         std::string name;
@@ -113,6 +133,17 @@ namespace PROGRAM {
             timeSlices.push_back(timeSlice);
             return timeSlice;
         }
+
+        void freeTimeSlice(std::shared_ptr<TimeSlice<Device> >& t)
+        {
+            for (auto v = timeSlices.begin(); v != timeSlices.end(); ++v) {
+                if ((*v) == t) {
+                    timeSlices.erase(v);
+                    break;
+                }
+            }
+        }
+
         std::vector<std::shared_ptr<TimeSlice<Device> > > timeSlices;
         
         std::string name;
@@ -143,30 +174,7 @@ namespace PROGRAM {
         }
 
     public:
-        bool GroupRequestReagent(Step *step)
-        {          
-            // auto it = groupMap.find(step->reagent);
-            // if (it == groupMap.end())
-            //     return false;
-            // std::shared_ptr<Reagent> target = map[it->second->at(0)];
-            // if (target->timeSlices.size() == 0) {
-
-            // }
-            // for (int i = 1; i < it->second->size(); ++i) {
-            //     std::string& reagentKey = it->second->at(i);
-            //     map[reagentKey]->timeSlices;
-            // }
-
-
-            return true;    
-        }
-
-    private:
-        inline bool isReagentGroup(Step *step)
-        {
-            return groupMap.find(step->reagent) == groupMap.end();
-        }        
-
+        bool RequestTimeSlice(Step *step);   
 
     private:
         std::map<std::string, std::shared_ptr<Reagent> > map;
@@ -175,7 +183,7 @@ namespace PROGRAM {
 
     struct Step {
         
-        Step(json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_)
+        Step(Program *parent, json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_), parent(parent)
         {
             // id = j["id"].get<int>();
             reagent = j["reagent"].get<std::string>().substr(1);
@@ -184,6 +192,13 @@ namespace PROGRAM {
             is_pressure = (j["pressure"].get<std::string>() == "on") ? true : false;
             is_vacuum = (j["vacuum"].get<std::string>() == "on") ? true : false;
             extensionTime = j["extension_time"].get<int>();
+
+        }
+
+        ~Step()
+        {
+            // free time slice
+            reagentTimeSlice->parent->freeTimeSlice(reagentTimeSlice);
         }
 
         std::string dump()
@@ -205,6 +220,7 @@ namespace PROGRAM {
         bool isOverExtensionTime()
         {
             // return offset > extensionTime;
+            return false;
         }
 
         int getStartTime();
@@ -219,6 +235,8 @@ namespace PROGRAM {
             startTime = getStartTime();
             endTime = startTime + getStepTime();     
         }
+
+
 
         int id;
         std::string reagent;
@@ -257,10 +275,10 @@ namespace PROGRAM {
             : endTime(0), name(_name), config(config_), retort(retort_), priority(priority_)
         {
             for (size_t i = 0; i < _j.size(); ++i) {
-                auto s = new Step(_j[i], config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
-                s->id = i;
-                s->parent = this;
-                steps.insert(make_pair(i, s));
+                auto step = new Step(this, _j[i], config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
+                step->id = i;
+                config->reagentManager->RequestTimeSlice(step);
+                steps.insert(make_pair(i, step));
             }
 
             // FIXME
@@ -452,6 +470,39 @@ namespace PROGRAM {
         int retort;
         int priority;
     };
+
+    bool ReagentManager::RequestTimeSlice(Step *step)
+    {
+        // process nongroup      
+        auto it = groupMap.find(step->reagent);
+        if (it == groupMap.end()) {
+            auto it1 = map.find(step->reagent);
+            if (it1 == map.end())
+                return false;
+            step->reagentTimeSlice = it1->second->newTimeSlice();
+            return true;
+        }
+
+        // process group
+        std::shared_ptr<Reagent> target = map[it->second->at(0)];
+        for (size_t i = 1; i < it->second->size(); ++i) {
+            auto& v = map[it->second->at(i)];
+            int targetCount = target->getTimeSliceCount();
+            if (targetCount == 0)
+                break;
+            int vCount = v->getTimeSliceCount();
+            if (vCount == 0) {
+                target = v;
+                break;
+            }
+            if (target->timeSlices[targetCount - 1]->getEndTime() > v->timeSlices[vCount - 1]->getEndTime())
+                target = v;          
+        }
+
+        step->reagentTimeSlice = target->newTimeSlice();
+
+        return true;    
+    }
 
     int Step::getStartTime()
     {
