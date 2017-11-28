@@ -63,6 +63,7 @@ namespace PROGRAM {
     template <typename T> class TimeSlice {
         friend struct Reagent;
         friend struct Device;
+        friend struct Step;
     public:
         TimeSlice(T *parent)
             :startTime(0), duration(0), offset(0), extensionTime(0), parent(parent)
@@ -79,6 +80,11 @@ namespace PROGRAM {
         int getEndTime()
         {
             return 0;
+        }
+
+        int getSliceTime()
+        {
+            return duration + offset;
         }
         
         bool isOverExtensionTime()
@@ -183,16 +189,21 @@ namespace PROGRAM {
 
     struct Step {
         
-        Step(Program *parent, json &j, bool passingPoint_): offset(0), passingPoint(passingPoint_), parent(parent)
+        Step(Program *parent, std::string reagent_, bool passingPoint_): reagent(reagent_), passingPoint(passingPoint_), parent(parent)
         {
-            // id = j["id"].get<int>();
-            reagent = j["reagent"].get<std::string>().substr(1);
-            duration = j["duration"].get<int>() * 60;
+        }
+
+        void initReagent(json &j)
+        {
+            reagentTimeSlice->duration = j["duration"].get<int>() * 60;
+            reagentTimeSlice->extensionTime = j["extension_time"].get<int>();
+        }
+
+        void initDevice(json &j)
+        {
             temperature = j["temperature"].get<int>();
             is_pressure = (j["pressure"].get<std::string>() == "on") ? true : false;
             is_vacuum = (j["vacuum"].get<std::string>() == "on") ? true : false;
-            extensionTime = j["extension_time"].get<int>();
-
         }
 
         ~Step()
@@ -207,20 +218,29 @@ namespace PROGRAM {
                 + "\npressure : " + std::to_string(is_pressure) + "\nvacuum : " + std::to_string(is_vacuum));
         }
 
-        bool isPassingPoint()
+        inline bool isPassingPoint()
         {
             return passingPoint;
         }
 
-        int getStepTime()
+        inline int getStepTime()
         {
-            return duration + offset;
+            return getReagentTime() + getReagentTime();
         }
 
-        bool isOverExtensionTime()
+        inline int getReagentTime()
         {
-            // return offset > extensionTime;
-            return false;
+            return reagentTimeSlice->getSliceTime();
+        }
+
+        inline int getDeviceTime()
+        {
+            return deviceTimeSlice->getSliceTime();
+        }
+
+        inline bool isOverExtensionTime()
+        {
+            return reagentTimeSlice->isOverExtensionTime() || deviceTimeSlice->isOverExtensionTime();
         }
 
         int getStartTime();
@@ -236,8 +256,6 @@ namespace PROGRAM {
             endTime = startTime + getStepTime();     
         }
 
-
-
         int id;
         std::string reagent;
         int duration;
@@ -245,7 +263,6 @@ namespace PROGRAM {
         bool is_pressure;
         bool is_vacuum;
 
-        int step_time;
         int offset; // for passing point
         bool passingPoint;
 
@@ -275,9 +292,12 @@ namespace PROGRAM {
             : endTime(0), name(_name), config(config_), retort(retort_), priority(priority_)
         {
             for (size_t i = 0; i < _j.size(); ++i) {
-                auto step = new Step(this, _j[i], config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
+                auto step = new Step(this, _j["reagent"].get<std::string>().substr(1),
+                     config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
                 step->id = i;
                 config->reagentManager->RequestTimeSlice(step);
+                step->initReagent(_j);
+                step->initDevice(_j);
                 steps.insert(make_pair(i, step));
             }
 
