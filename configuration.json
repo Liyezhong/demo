@@ -134,35 +134,35 @@
          ],
 
         "overnight" : [ 
-                { "id" : 0, "reagent" : "@r1", "duration" : 60, "extension_time" : 10, "temperature" : 37, "pressure" : "on", "vacuum" : "on" },
+                { "id" : 0, "reagent" : "@r1_group", "duration" : 60, "extension_time" : 10, "temperature" : 37, "pressure" : "on", "vacuum" : "on" },
                 { "id" : 1, "reagent" : "@r9", "duration" : 2, "extension_time" : 10, "temperature" : -1, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 2, "reagent" : "@r2", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 2, "reagent" : "@r2_group", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 3, "reagent" : "@r3", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 4, "reagent" : "@r5", "duration" : 40, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 5, "reagent" : "@r6_0", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 6, "reagent" : "@r6_1", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 7, "reagent" : "@r6_2", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 8, "reagent" : "@r7_0", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 8, "reagent" : "@r7_0_group", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 9, "reagent" : "@r7_1", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 10, "reagent" : "@r7_2", "duration" : 60, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 11, "reagent" : "@r8_0", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
+                { "id" : 11, "reagent" : "@r8_0_group", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
                 { "id" : 12, "reagent" : "@r8_1", "duration" : 60, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" },
                 { "id" : 13, "reagent" : "@r8_2", "duration" : 90, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" }
          ],
 
          "biopsy" : [
-                { "id" : 0, "reagent" : "@r1", "duration" : 15, "extension_time" : 10, "temperature" : 37, "pressure" : "on", "vacuum" : "on" },
+                { "id" : 0, "reagent" : "@r1_group", "duration" : 15, "extension_time" : 10, "temperature" : 37, "pressure" : "on", "vacuum" : "on" },
                 { "id" : 1, "reagent" : "@r9", "duration" : 2, "extension_time" : 10, "temperature" : -1, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 2, "reagent" : "@r2", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 2, "reagent" : "@r2_group", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 3, "reagent" : "@r3", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 4, "reagent" : "@r5", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 5, "reagent" : "@r6_0", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 6, "reagent" : "@r6_1", "duration" : 5, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 7, "reagent" : "@r6_2", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 8, "reagent" : "@r7_0", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 8, "reagent" : "@r7_0_group", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 9, "reagent" : "@r7_1", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 10, "reagent" : "@r7_2", "duration" : 10, "extension_time" : 10, "temperature" : 45, "pressure" : "off", "vacuum" : "off" },
-                { "id" : 11, "reagent" : "@r8_0", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
+                { "id" : 11, "reagent" : "@r8_0_group", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 12, "reagent" : "@r8_1", "duration" : 5, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "off" },
                 { "id" : 13, "reagent" : "@r8_2", "duration" : 10, "extension_time" : 10, "temperature" : 65, "pressure" : "off", "vacuum" : "on" }
         ]

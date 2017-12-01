@@ -64,23 +64,18 @@ namespace PROGRAM {
         friend struct Reagent;
         friend struct Device;
         friend struct Step;
+        friend class Program;
     public:
         TimeSlice(T *parent)
-            :startTime(0), duration(0), offset(0), extensionTime(0), parent(parent)
+            :duration(0), offset(0), extensionTime(0), parent(parent)
         {
 
         }
 
     public:
-        int getStartTime()
-        {
-            return 0;
-        }
+        int getStartTime();
         
-        int getEndTime()
-        {
-            return 0;
-        }
+        int getEndTime();
 
         int getSliceTime()
         {
@@ -93,14 +88,15 @@ namespace PROGRAM {
         }
 
     private:
-        int startTime;
         int duration;
         int offset;
         int extensionTime;
     public:
         T *parent;
+        Program *program;
+        Step *step;
     };
-
+    
     struct Reagent {
         std::shared_ptr<TimeSlice<Reagent> > newTimeSlice()
         {
@@ -169,6 +165,7 @@ namespace PROGRAM {
                         group->push_back(v.get<std::string>());
                     }
                 } else {
+                    // pattern match string
                     std::shared_ptr<Reagent> reagent = std::make_shared<Reagent>();
                     reagent->key = it.key();
                     reagent->name = it.value()["name"].get<std::string>();
@@ -197,6 +194,9 @@ namespace PROGRAM {
         {
             reagentTimeSlice->duration = j["duration"].get<int>() * 60;
             reagentTimeSlice->extensionTime = j["extension_time"].get<int>();
+
+            reagentTimeSlice->program = parent;
+            reagentTimeSlice->step = this;
         }
 
         void initDevice(json &j)
@@ -204,6 +204,7 @@ namespace PROGRAM {
             temperature = j["temperature"].get<int>();
             is_pressure = (j["pressure"].get<std::string>() == "on") ? true : false;
             is_vacuum = (j["vacuum"].get<std::string>() == "on") ? true : false;
+
         }
 
         ~Step()
@@ -218,27 +219,27 @@ namespace PROGRAM {
                 + "\npressure : " + std::to_string(is_pressure) + "\nvacuum : " + std::to_string(is_vacuum));
         }
 
-        inline bool isPassingPoint()
+        bool isPassingPoint()
         {
             return passingPoint;
         }
 
-        inline int getStepTime()
+        int getStepTime()
         {
             return getReagentTime() + getReagentTime();
         }
 
-        inline int getReagentTime()
+        int getReagentTime()
         {
             return reagentTimeSlice->getSliceTime();
         }
 
-        inline int getDeviceTime()
+        int getDeviceTime()
         {
             return deviceTimeSlice->getSliceTime();
         }
 
-        inline bool isOverExtensionTime()
+        bool isOverExtensionTime()
         {
             return reagentTimeSlice->isOverExtensionTime() || deviceTimeSlice->isOverExtensionTime();
         }
@@ -254,6 +255,13 @@ namespace PROGRAM {
         {
             startTime = getStartTime();
             endTime = startTime + getStepTime();     
+        }
+
+        bool operator==(Step& rhs)
+        {
+            return this->id == rhs.id 
+                && this->reagent == rhs.reagent
+                    && this->getReagentTime() == rhs.getReagentTime();
         }
 
         int id;
@@ -296,6 +304,7 @@ namespace PROGRAM {
                      config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
                 step->id = i;
                 config->reagentManager->RequestTimeSlice(step);
+                
                 step->initReagent(_j);
                 step->initDevice(_j);
                 steps.insert(make_pair(i, step));
@@ -490,6 +499,17 @@ namespace PROGRAM {
         int retort;
         int priority;
     };
+
+    //-------------------Time Slice----------------------------------------------
+    template <typename T> TimeSlice::getStartTime()
+    {
+
+    }
+
+    template <typename T> TimeSlice::getEndTime()
+    {
+        
+    }
 
     bool ReagentManager::RequestTimeSlice(Step *step)
     {
