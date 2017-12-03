@@ -250,11 +250,13 @@ namespace PROGRAM {
         int getDeviceTime()
         {
             // return deviceTimeSlice->getSliceTime();
+            return 0;
         }
 
         bool isOverExtensionTime()
         {
             // return reagentTimeSlice->isOverExtensionTime() || deviceTimeSlice->isOverExtensionTime();
+
         }
 
         int getStartTime();
@@ -534,7 +536,7 @@ namespace PROGRAM {
         // Device ops Enter time slice
         for (auto i = this->step->deviceEnterTimeSlice.begin();
                 i != this->step->deviceEnterTimeSlice.end(); ++i) {
-            if (typeid(*i) == typeid(this) && *i == this)
+            if (typeid(*i) == typeid(this) && (size_t)i->get() == (size_t)this)
                 return startTime;
             startTime += (*i)->getSliceTime();
         }
@@ -548,7 +550,7 @@ namespace PROGRAM {
         // Device ops Leave time slice
         for (auto i = this->step->deviceLeaveTimeSlice.begin();
                 i != this->step->deviceLeaveTimeSlice.end(); ++i) {
-            if (typeid(*i) == typeid(this) && (*i) == this)
+            if (typeid(*i) == typeid(this) && (size_t)i->get() == (size_t)this)
                 return startTime;
             startTime += (*i)->getSliceTime();
         }
