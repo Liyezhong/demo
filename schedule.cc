@@ -8,6 +8,7 @@
 #include "json.hpp"
 #include <unistd.h>
 #include <memory>
+#include <typeinfo>
 
 namespace PROGRAM {
 
@@ -67,7 +68,7 @@ namespace PROGRAM {
         friend class Program;
     public:
         TimeSlice(T *parent)
-            :duration(0), offset(0), extensionTime(0), parent(parent)
+            :duration(0), offset(0), extensionTime(0), lock(false), parent(parent)
         {
 
         }
@@ -87,10 +88,22 @@ namespace PROGRAM {
             return offset > extensionTime;
         }
 
+        bool getLock()
+        {
+            return lock;
+        }
+
+        void setLock(bool l)
+        {
+            lock = l;
+        }
+
     private:
         int duration;
         int offset;
         int extensionTime;
+        bool lock;
+
     public:
         T *parent;
         Program *program;
@@ -236,12 +249,12 @@ namespace PROGRAM {
 
         int getDeviceTime()
         {
-            return deviceTimeSlice->getSliceTime();
+            // return deviceTimeSlice->getSliceTime();
         }
 
         bool isOverExtensionTime()
         {
-            return reagentTimeSlice->isOverExtensionTime() || deviceTimeSlice->isOverExtensionTime();
+            // return reagentTimeSlice->isOverExtensionTime() || deviceTimeSlice->isOverExtensionTime();
         }
 
         int getStartTime();
@@ -276,8 +289,9 @@ namespace PROGRAM {
 
         Program *parent;
 
-        std::shared_ptr<TimeSlice<Reagent> > reagentTimeSlice;
-        std::shared_ptr<TimeSlice<Device> > deviceTimeSlice;
+        std::vector<std::shared_ptr<TimeSlice<Device> > > deviceEnterTimeSlice;
+        std::shared_ptr<TimeSlice<Reagent> > reagentTimeSlice;        
+        std::vector<std::shared_ptr<TimeSlice<Device> > > deviceLeaveTimeSlice;        
 
         //
         // int start_time;
@@ -291,6 +305,7 @@ namespace PROGRAM {
     };
 
     class Program {
+        template<typename> friend class TimeSlice;
         friend struct Step;
         friend int compare(Program *p1, Program *p2);
         friend void resolveConflicts(std::vector<Program *> &v);
@@ -500,17 +515,54 @@ namespace PROGRAM {
         int priority;
     };
 
-    //-------------------Time Slice----------------------------------------------
-    template <typename T> TimeSlice::getStartTime()
+    //-------------------Time Slice ------------------------------
+    template <typename T>
+    int TimeSlice<T>::getStartTime()
     {
+        int startTime = this->program->getStartTime();
 
-    }
+        if (this->parent == nullptr)
+            return 0;
+        if (this->program == nullptr)
+            return 0;
+        if (this->step == nullptr)
+            return 0;
 
-    template <typename T> TimeSlice::getEndTime()
-    {
+        for (int i = 0; i < this->step->id; ++i)
+            startTime += this->program->steps[i]->getStepTime();
+
+        // Device ops Enter time slice
+        for (auto i = this->step->deviceEnterTimeSlice.begin();
+                i != this->step->deviceEnterTimeSlice.end(); ++i) {
+            if (typeid(*i) == typeid(this) && *i == this)
+                return startTime;
+            startTime += (*i)->getSliceTime();
+        }
         
+        // Reagent soaking time slice
+        if (typeid(*this) == typeid(this->step->reagentTimeSlice))
+            return startTime;
+        else
+            startTime += this->step->reagentTimeSlice->getSliceTime();
+
+        // Device ops Leave time slice
+        for (auto i = this->step->deviceLeaveTimeSlice.begin();
+                i != this->step->deviceLeaveTimeSlice.end(); ++i) {
+            if (typeid(*i) == typeid(this) && (*i) == this)
+                return startTime;
+            startTime += (*i)->getSliceTime();
+        }
+      
+        return startTime;
     }
 
+    template <typename T>
+    int TimeSlice<T>::getEndTime()
+    {
+        return this->getStartTime() + this->getSliceTime();
+    }
+
+    //------------------- ReagentManager ------------------------
     bool ReagentManager::RequestTimeSlice(Step *step)
     {
         // process nongroup      
@@ -544,6 +596,7 @@ namespace PROGRAM {
         return true;    
     }
 
+    //------------------- Step ------------------------
     int Step::getStartTime()
     {
         if (this->parent == nullptr)
