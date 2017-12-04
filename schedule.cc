@@ -68,7 +68,7 @@ namespace PROGRAM {
         friend class Program;
     public:
         TimeSlice(T *parent)
-            :duration(0), offset(0), extensionTime(0), lock(false), parent(parent)
+            :duration(0), offset(0), extensionTime(0), lock(false), exclusive(0), parent(parent)
         {
 
         }
@@ -98,11 +98,22 @@ namespace PROGRAM {
             lock = l;
         }
 
+        bool isExclusive()
+        {
+            return exclusive;
+        }
+
+        void setExclusive(bool e)
+        {
+            exclusive = e;
+        }
+
     private:
         int duration;
         int offset;
         int extensionTime;
         bool lock;
+        bool exclusive;
 
     public:
         T *parent;
@@ -217,7 +228,6 @@ namespace PROGRAM {
             temperature = j["temperature"].get<int>();
             is_pressure = (j["pressure"].get<std::string>() == "on") ? true : false;
             is_vacuum = (j["vacuum"].get<std::string>() == "on") ? true : false;
-
         }
 
         ~Step()
@@ -249,14 +259,40 @@ namespace PROGRAM {
 
         int getDeviceTime()
         {
-            // return deviceTimeSlice->getSliceTime();
-            return 0;
+            return getDeviceEnterTime() + getDeviceLeaveTime();
+        }
+
+        int getDeviceEnterTime()
+        {
+            int timeSum = 0;
+            for (auto &i: deviceEnterTimeSlice)
+                timeSum += i->getSliceTime(); 
+            return timeSum;
+        }
+
+        int getDeviceLeaveTime()
+        {
+            int timeSum = 0;
+            for (auto &i: deviceLeaveTimeSlice)
+                timeSum += i->getSliceTime(); 
+            return timeSum;
         }
 
         bool isOverExtensionTime()
         {
-            // return reagentTimeSlice->isOverExtensionTime() || deviceTimeSlice->isOverExtensionTime();
+            // Device Enter Time Slice
+            for (auto &i: deviceEnterTimeSlice)
+                if (i->isOverExtensionTime() == true)
+                    return true;
+            // Reagent Soaking Time Slice                    
+            if (reagentTimeSlice->isOverExtensionTime() == true)
+                return true;
+            // Device Leave Time Slice
+            for (auto &i: deviceLeaveTimeSlice)
+                if (i->isOverExtensionTime() == true)
+                    return true;
 
+            return false;
         }
 
         int getStartTime();
@@ -272,12 +308,12 @@ namespace PROGRAM {
             endTime = startTime + getStepTime();     
         }
 
-        bool operator==(Step& rhs)
-        {
-            return this->id == rhs.id 
-                && this->reagent == rhs.reagent
-                    && this->getReagentTime() == rhs.getReagentTime();
-        }
+        // bool operator==(Step& rhs)
+        // {
+        //     return this->id == rhs.id 
+        //         && this->reagent == rhs.reagent
+        //             && this->getReagentTime() == rhs.getReagentTime();
+        // }
 
         int id;
         std::string reagent;
@@ -286,7 +322,6 @@ namespace PROGRAM {
         bool is_pressure;
         bool is_vacuum;
 
-        int offset; // for passing point
         bool passingPoint;
 
         Program *parent;
@@ -300,10 +335,6 @@ namespace PROGRAM {
         // int start_time_offset;
         // int end_time;
         // int end_time_offset;
-
-        int extensionTime;
-
-        //
     };
 
     class Program {
@@ -521,7 +552,7 @@ namespace PROGRAM {
     template <typename T>
     int TimeSlice<T>::getStartTime()
     {
-        int startTime = this->program->getStartTime();
+        int programStartTime = this->program->getStartTime();
 
         if (this->parent == nullptr)
             return 0;
@@ -531,31 +562,31 @@ namespace PROGRAM {
             return 0;
 
         for (int i = 0; i < this->step->id; ++i)
-            startTime += this->program->steps[i]->getStepTime();
+            programStartTime += this->program->steps[i]->getStepTime();
 
         // Device ops Enter time slice
         for (auto i = this->step->deviceEnterTimeSlice.begin();
                 i != this->step->deviceEnterTimeSlice.end(); ++i) {
             if (typeid(*i) == typeid(this) && (size_t)i->get() == (size_t)this)
-                return startTime;
-            startTime += (*i)->getSliceTime();
+                return programStartTime;
+            programStartTime += (*i)->getSliceTime();
         }
         
         // Reagent soaking time slice
         if (typeid(*this) == typeid(this->step->reagentTimeSlice))
-            return startTime;
+            return programStartTime;
         else
-            startTime += this->step->reagentTimeSlice->getSliceTime();
+            programStartTime += this->step->reagentTimeSlice->getSliceTime();
 
         // Device ops Leave time slice
         for (auto i = this->step->deviceLeaveTimeSlice.begin();
                 i != this->step->deviceLeaveTimeSlice.end(); ++i) {
             if (typeid(*i) == typeid(this) && (size_t)i->get() == (size_t)this)
-                return startTime;
-            startTime += (*i)->getSliceTime();
+                return programStartTime;
+            programStartTime += (*i)->getSliceTime();
         }
       
-        return startTime;
+        return programStartTime;
     }
 
     template <typename T>
