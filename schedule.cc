@@ -66,6 +66,7 @@ namespace PROGRAM {
         friend struct Device;
         friend struct Step;
         friend class Program;
+        friend void resolveConflicts(std::vector<Program *> &v);
     public:
         TimeSlice(T *parent)
             :duration(0), offset(0), extensionTime(0), lock(false), exclusive(0), parent(parent)
@@ -88,7 +89,7 @@ namespace PROGRAM {
             return offset > extensionTime;
         }
 
-        bool getLock()
+        bool isLock()
         {
             return lock;
         }
@@ -423,7 +424,7 @@ namespace PROGRAM {
         {
             int offsetBackup;
             do {
-                offsetBackup = this->baseStep->offset;
+                offsetBackup = this->baseStep->reagentTimeSlice->offset;
                 for (size_t i = 0; i < this->steps.size(); ++i) {
                     if (this->steps[i]->isPassingPoint() == true)
                         continue;
@@ -433,9 +434,9 @@ namespace PROGRAM {
 
                     int len;
                     if (isIntersection(base->steps[j], this->steps[i], len) == true)
-                        this->baseStep->offset += len;
+                        this->baseStep->reagentTimeSlice->offset += len;
                 }
-            } while (offsetBackup != this->baseStep->offset);
+            } while (offsetBackup != this->baseStep->reagentTimeSlice->offset);
         }
 
         int searchPassingPointStartStep(Program *base)
@@ -465,7 +466,7 @@ namespace PROGRAM {
                     continue;
                 int len;
                 if (isIntersection(base->steps[i], this->steps[j], len) == true)
-                    this->baseStep->offset += len;
+                    this->baseStep->reagentTimeSlice->offset += len;
             }
         }
 
@@ -661,10 +662,10 @@ namespace PROGRAM {
         for (int i = 1; i < (int)v.size(); ++i) {
             int offsetBackup;
             do {
-                offsetBackup = v[i]->baseStep->offset;
+                offsetBackup = v[i]->baseStep->reagentTimeSlice->offset;
                 for (int j = 0; j < i; ++j)
                     v[i]->resolveConflicts(v[j]);
-            } while (offsetBackup != v[i]->baseStep->offset);
+            } while (offsetBackup != v[i]->baseStep->reagentTimeSlice->offset);
         }
     }
 
