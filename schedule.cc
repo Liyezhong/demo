@@ -109,6 +109,8 @@ namespace PROGRAM {
             exclusive = e;
         }
 
+        virtual void run();
+
     private:
         int duration;
         int offset;
@@ -211,7 +213,7 @@ namespace PROGRAM {
 
     struct Step {
         
-        Step(Program *parent, std::string reagent_, bool passingPoint_): reagent(reagent_), passingPoint(passingPoint_), parent(parent)
+        Step(Program *parent, std::string reagent_): reagent(reagent_), passingPoint(false), parent(parent)
         {
         }
 
@@ -327,6 +329,7 @@ namespace PROGRAM {
 
         Program *parent;
 
+// TODO: PV
         std::vector<std::shared_ptr<TimeSlice<Device> > > deviceEnterTimeSlice;
         std::shared_ptr<TimeSlice<Reagent> > reagentTimeSlice;        
         std::vector<std::shared_ptr<TimeSlice<Device> > > deviceLeaveTimeSlice;        
@@ -349,10 +352,13 @@ namespace PROGRAM {
             : endTime(0), name(_name), config(config_), retort(retort_), priority(priority_)
         {
             for (size_t i = 0; i < _j.size(); ++i) {
-                auto step = new Step(this, _j["reagent"].get<std::string>().substr(1),
-                     config->reagents->operator[](_j[i]["reagent"].get<std::string>().substr(1))["passing_point"].get<bool>());
+                auto step = new Step(this, _j[i]["reagent"].get<std::string>().substr(1)
+                     );
                 step->id = i;
                 config->reagentManager->RequestTimeSlice(step);
+
+// config->reagents->operator[](_j[i]["reagent"]
+//                     .get<std::string>().substr(1))["passing_point"].get<bool>()
                 
                 step->initReagent(_j);
                 step->initDevice(_j);
@@ -426,15 +432,38 @@ namespace PROGRAM {
             do {
                 offsetBackup = this->baseStep->reagentTimeSlice->offset;
                 for (size_t i = 0; i < this->steps.size(); ++i) {
-                    if (this->steps[i]->isPassingPoint() == true)
-                        continue;
+                    // if (this->steps[i]->isPassingPoint() == true)
+                    //     continue;
                     int j = base->find(this->steps[i]);
                     if (j == -1)
                         continue;
 
+#if 0
                     int len;
                     if (isIntersection(base->steps[j], this->steps[i], len) == true)
                         this->baseStep->reagentTimeSlice->offset += len;
+#endif
+
+                    //////////////////////////////////////////////////////////////////
+                    Step *baseStep = base->steps[j];
+                    Step *selfStep = this->steps[i];
+
+                    // Device ops Enter Time Slice
+                    // TODO:                    
+
+                    // Reagent Soaking Time Slice
+                    {
+                        int len;
+                        if (isIntersectionTimeSlice(baseStep->reagentTimeSlice.get(),
+                                selfStep->reagentTimeSlice.get(), len) == true) {
+                            this->baseStep->reagentTimeSlice->offset += len;
+                        }
+                    }
+
+                    // Device ops Leave Time Slice
+                    // TODO:
+
+                    //////////////////////////////////////////////////////////////////
                 }
             } while (offsetBackup != this->baseStep->reagentTimeSlice->offset);
         }
@@ -481,7 +510,37 @@ namespace PROGRAM {
             int otherStepStartTime = s2->getStartTime();
 
             len = baseStepEndTime - otherStepStartTime;
-            if ((len >= base->steps[s1->id]->getStepTime() + other->steps[s2->id]->getStepTime())
+            if ((len >= s1->getStepTime() + s2->getStepTime())
+                 || len <= 0)
+                return false;
+            return true;
+        }
+
+        static bool isIntersectionTimeSlice(TimeSlice<Reagent> *s1, TimeSlice<Reagent> *s2, int &len)
+        {
+            Program *base = s1->program;
+            Program *other = s2->program;
+
+            int baseSliceEndTime = s1->getEndTime();
+            int otherSliceStartTime = s2->getStartTime();
+
+            len = baseSliceEndTime - otherSliceStartTime;
+            if ((len >= s1->getSliceTime() + s2->getSliceTime())
+                 || len <= 0)
+                return false;
+            return true;
+        }
+
+        static bool isIntersectionTimeSlice(TimeSlice<Device> *s1, TimeSlice<Device> *s2, int &len)
+        {
+            Program *base = s1->program;
+            Program *other = s2->program;
+
+            int baseSliceEndTime = s1->getEndTime();
+            int otherSliceStartTime = s2->getStartTime();
+
+            len = baseSliceEndTime - otherSliceStartTime;
+            if ((len >= s1->getSliceTime() + s2->getSliceTime())
                  || len <= 0)
                 return false;
             return true;
@@ -492,7 +551,7 @@ namespace PROGRAM {
             int ret = -1;
 
             for (size_t i = 0; i < steps.size(); ++i) {
-                if (steps[i]->reagent == target->reagent) {
+                if (steps[i]->reagentTimeSlice->parent->name == target->reagentTimeSlice->parent->name) {
                     ret = i;
                     break;
                 }
@@ -739,7 +798,6 @@ int main(int argc, char *argv[])
     auto config = PROGRAM::Configuration();
     auto reagentManager = PROGRAM::ReagentManager(config);
 
-    return 0;
 
     PROGRAM::Program *programPassingPoint = nullptr;
 
@@ -755,18 +813,21 @@ int main(int argc, char *argv[])
         PROGRAM::json &j = config.programs->operator[](name);
         auto program = new PROGRAM::Program(name, j, startTime, &config, retort, priority);
 
-        if (PROGRAM::__passingPoint__ == 1) {
-            if (priority == 99) {
-                programPassingPoint = program;
-                continue;
-            }
-        }
+        // if (PROGRAM::__passingPoint__ == 1) {
+        //     if (priority == 99) {
+        //         programPassingPoint = program;
+        //         continue;
+        //     }
+        // }
 
-        v.push_back(program);
+        // v.push_back(program);
     }
-
+#if 0
     // sort by start_time and priority
     std::sort(v.begin(), v.end(), PROGRAM::compare);
+
+        PROGRAM::printTimingSequence(v);;
+        return 0;
 
     PROGRAM::resolveConflicts(v);
 
@@ -792,6 +853,6 @@ int main(int argc, char *argv[])
 
     // remember to free all resources
     PROGRAM::destory(v);
-
+#endif
     return 0;
 }

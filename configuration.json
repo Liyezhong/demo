@@ -5,43 +5,43 @@
         "r7_0_group" : [ "r7_0_0", "r7_0_1", "r7_0_2", "r7_0_3" ],
         "r8_0_group" : [ "r8_0_0", "r8_0_1", "r8_0_2", "r8_0_3" ],                                           
 
-        "r1_0_0" :  { "name" : "formalin", "station" : "L1", "passPointing" : true },
-        "r1_0_1" :  { "name" : "formalin", "station" : "L2", "passPointing" : true },
-        "r1_0_2" :  { "name" : "formalin", "station" : "L3", "passPointing" : true },
-        "r1_0_3" :  { "name" : "formalin", "station" : "L4", "passPointing" : true },
+        "r1_0_0" :  { "name" : "formalin", "station" : "L1", "passing_point" : true },
+        "r1_0_1" :  { "name" : "formalin", "station" : "L2", "passing_point" : true },
+        "r1_0_2" :  { "name" : "formalin", "station" : "L3", "passing_point" : true },
+        "r1_0_3" :  { "name" : "formalin", "station" : "L4", "passing_point" : true },
 
-        "r2_0_0" :  { "name" : "ethanol 70%", "station" : "L5", "passPointing" : true },
-        "r2_0_1" :  { "name" : "ethanol 70%", "station" : "L6", "passPointing" : true },
-        "r2_0_2" :  { "name" : "ethanol 70%", "station" : "L7", "passPointing" : true }, 
-        "r2_0_3" :  { "name" : "ethanol 70%", "station" : "L8", "passPointing" : true },                    
+        "r2_0_0" :  { "name" : "ethanol 70%", "station" : "L5", "passing_point" : true },
+        "r2_0_1" :  { "name" : "ethanol 70%", "station" : "L6", "passing_point" : true },
+        "r2_0_2" :  { "name" : "ethanol 70%", "station" : "L7", "passing_point" : true }, 
+        "r2_0_3" :  { "name" : "ethanol 70%", "station" : "L8", "passing_point" : true },                    
 
-        "r3" :  { "name" : "ethanol 80%", "station" : "L9", "passPointing" : false },
-        "r4" :  { "name" : "ethanol 90%", "station" : "L10", "passPointing" : false },
-        "r5" :  { "name" : "ethanol 95%", "station" : "L11", "passPointing" : false },
+        "r3" :  { "name" : "ethanol 80%", "station" : "L9", "passing_point" : false },
+        "r4" :  { "name" : "ethanol 90%", "station" : "L10", "passing_point" : false },
+        "r5" :  { "name" : "ethanol 95%", "station" : "L11", "passing_point" : false },
 
-        "r6_0" :  { "name" : "ethanol 100%", "station" : "L12", "passPointing" : false },
-        "r6_1" :  { "name" : "ethanol 100%", "station" : "L13", "passPointing" : false },
-        "r6_2" :  { "name" : "ethanol 100%", "station" : "L14", "passPointing" : false },
+        "r6_0" :  { "name" : "ethanol 100%", "station" : "L12", "passing_point" : false },
+        "r6_1" :  { "name" : "ethanol 100%", "station" : "L13", "passing_point" : false },
+        "r6_2" :  { "name" : "ethanol 100%", "station" : "L14", "passing_point" : false },
 
-        "r7_0_0" :  { "name" : "xylene", "station" : "L15", "passPointing" : true },                     
-        "r7_0_1" :  { "name" : "xylene", "station" : "L16", "passPointing" : true },  
-        "r7_0_2" :  { "name" : "xylene", "station" : "L17", "passPointing" : true },                     
-        "r7_0_3" :  { "name" : "xylene", "station" : "L18", "passPointing" : true },         
+        "r7_0_0" :  { "name" : "xylene", "station" : "L15", "passing_point" : true },                     
+        "r7_0_1" :  { "name" : "xylene", "station" : "L16", "passing_point" : true },  
+        "r7_0_2" :  { "name" : "xylene", "station" : "L17", "passing_point" : true },                     
+        "r7_0_3" :  { "name" : "xylene", "station" : "L18", "passing_point" : true },         
         
-        "r7_1" :  { "name" : "xylene", "station" : "L19", "passPointing" : false },
-        "r7_2" :  { "name" : "xylene", "station" : "L20", "passPointing" : false },
+        "r7_1" :  { "name" : "xylene", "station" : "L19", "passing_point" : false },
+        "r7_2" :  { "name" : "xylene", "station" : "L20", "passing_point" : false },
            
-        "r8_0_0" :  { "name" : "paraffin", "station" : "L21", "passPointing" : true },
-        "r8_0_1" :  { "name" : "paraffin", "station" : "L22", "passPointing" : true },
-        "r8_0_2" :  { "name" : "paraffin", "station" : "L23", "passPointing" : true },
-        "r8_0_3" :  { "name" : "paraffin", "station" : "L24", "passPointing" : true },
+        "r8_0_0" :  { "name" : "paraffin", "station" : "L21", "passing_point" : true },
+        "r8_0_1" :  { "name" : "paraffin", "station" : "L22", "passing_point" : true },
+        "r8_0_2" :  { "name" : "paraffin", "station" : "L23", "passing_point" : true },
+        "r8_0_3" :  { "name" : "paraffin", "station" : "L24", "passing_point" : true },
 
-        "r8_1" :  { "name" : "paraffin", "station" : "L25", "passPointing" : false },
-        "r8_2" :  { "name" : "paraffin", "station" : "L26", "passPointing" : false },
+        "r8_1" :  { "name" : "paraffin", "station" : "L25", "passing_point" : false },
+        "r8_2" :  { "name" : "paraffin", "station" : "L26", "passing_point" : false },
 
-        "r9" :  { "name" : "processing water", "station" : "L27", "passPointing" : false },
-        "r10" : { "name" : "cleaning xylene", "station" : "L28", "passPointing" : false },
-        "r11" : { "name" : "cleaning alcohol", "station" : "L29", "passPointing" : false }
+        "r9" :  { "name" : "processing water", "station" : "L27", "passing_point" : false },
+        "r10" : { "name" : "cleaning xylene", "station" : "L28", "passing_point" : false },
+        "r11" : { "name" : "cleaning alcohol", "station" : "L29", "passing_point" : false }
     },
 
     "devices" : {
